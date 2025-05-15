@@ -1,21 +1,18 @@
-# CodeRabbit Pro
 
-This is an old version of [CodeRabbit](http://coderabbit.ai) and is now in the maintenance mode.
-We recommend installing the Pro version from [CodeRabbit](http://coderabbit.ai). The Pro version is a total redesign and offers significantly better reviews that learn from your usage and improve over time. CodeRabbit Pro is free for open source projects. 
-
-[![Discord](https://img.shields.io/badge/Join%20us%20on-Discord-blue?logo=discord&style=flat-square)](https://discord.gg/GsXnASn26c)
-
-# AI-based PR reviewer and summarizer
+# AI-based PR test generator
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/github/last-commit/coderabbitai/ai-pr-reviewer/main?style=flat-square)](https://github.com/coderabbitai/ai-pr-reviewer/commits/main)
 
 ## Overview
 
-CodeRabbit `ai-pr-reviewer` is an AI-based code reviewer and summarizer for
-GitHub pull requests using OpenAI's `gpt-3.5-turbo` and `gpt-4` models. It is
-designed to be used as a GitHub Action and can be configured to run on every
-pull request and review comments
+This bot `ai-pr-test-generator` is an AI-based code reviewer and summarizer for
+GitHub pull requests using Mistral's models. It is designed to be used as a GitHub Action and can be configured to run on every
+pull request and generate test if needed
+
+**Caution** This project still in progress, do not use it untill I finish it
+
+This bot is a tool made by a student for an intership at intuitem for CISO Assisstant. Please be kind and feel free to give feedback :)
 
 ## Reviewer Features:
 
@@ -65,7 +62,7 @@ FAQs, you can refer to the sections below.
 at `.github/workflows/ai-pr-reviewer.yml`
 
 ```yaml
-name: Code Review
+name: Code Tester
 
 permissions:
   contents: read
@@ -95,6 +92,9 @@ jobs:
           debug: false
           review_simple_changes: false
           review_comment_lgtm: false
+          ai_api: 'mistral'
+          ai_api_base_url: ''
+          your_test_gen_bot_name: 'CISO Test Generator'
 ```
 
 #### Environment variables

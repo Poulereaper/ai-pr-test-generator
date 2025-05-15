@@ -1,9 +1,9 @@
-name: 'AI-based PR Reviewer & Summarizer with Chat Capabilities'
-description: 'AI-based PR Reviewer & Summarizer with Chat Capabilities'
+name: 'AI-based PR Test Generator'
+description: 'AI-based PR that cheks the code changes and generates test cases if needed'
 branding:
   icon: 'git-merge'
-  color: 'orange'
-author: 'CodeRabbit LLC'
+  color: 'purple'
+author: 'CISO ASSISTANT TEAM' 
 inputs:
   debug:
     required: false
@@ -136,44 +136,48 @@ inputs:
       !**/*.min.js.css
       !**/*.tfstate
       !**/*.tfstate.backup
-  disable_review:
+  disable_test:
     required: false
-    description: 'Only provide the summary and skip the code review.'
+    description: 'Only provide the information that the code could need test modificatioon and skip suggestion of tests.'
     default: 'false'
-  disable_release_notes:
-    required: false
-    description: 'Disable release notes'
-    default: 'false'
-  openai_base_url:
+  ai_api_base_url:
     required: false
     description: 'The url of the openai api interface.'
     default: 'https://api.openai.com/v1'
-  openai_light_model:
+  ai_api:
+    required: false
+    description: 'The AI API to use. This project will provide support for
+      - OpenAI API : openai
+      - Claude AI API : claude
+      - Mistral AI API : mistral
+      - Gemini AI API : gemini'
+    default: 'mistral'
+  ai_light_model_uses:
     required: false
     description:
-      'Model to use for simple tasks like summarizing diff on a file.'
-    default: 'gpt-3.5-turbo'
-  openai_heavy_model:
+      'Decide if we use only one or two models, if not available, the default model will be used.'
+    default: 'true'
+  ai_model_temperature:
     required: false
-    description: 'Model to use for complex tasks such as code reviews.'
-    default: 'gpt-4'
-  openai_model_temperature:
-    required: false
-    description: 'Temperature for GPT model'
+    description: 'Temperature for model if available'
     default: '0.05'
-  openai_retries:
+  ai_retries:
     required: false
     description:
-      'How many times to retry OpenAI API in case of timeouts or errors?'
+      'How many times to retry AI API in case of timeouts or errors?'
     default: '5'
-  openai_timeout_ms:
+  ai_timeout_ms:
     required: false
-    description: 'Timeout for OpenAI API call in millis'
+    description: 'Timeout for AI API call in millis'
     default: '360000'
-  openai_concurrency_limit:
+  ai_concurrency_limit:
     required: false
-    description: 'How many concurrent API calls to make to OpenAI servers?'
+    description: 'How many concurrent API calls to make to AI servers?'
     default: '6'
+  your_test_gen_bot_name:
+    required: false
+    description: 'The name of the bot that will be used to comment on the PR - Feel free to change it to your own bot name ;)'
+    default: 'AI Test Generator Bot'
   github_concurrency_limit:
     required: false
     description: 'How many concurrent API calls to make to GitHub?'
