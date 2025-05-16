@@ -1,7 +1,7 @@
-import '../fetch-polyfill'
+import './fetch-polyfill'
 
 import {info, setFailed, warning} from '@actions/core'
-import {Options} from '../options'
+import {Options} from './options'
 
 // import for OpenAI API
 import {
@@ -12,12 +12,12 @@ import {
   // eslint-disable-next-line import/no-unresolved
 } from 'chatgpt'
 import pRetry from 'p-retry'
-import {OpenAIOptions} from '../options'
+import {OpenAIOptions} from './options'
 
 // import for Mistral API
 //import {Mistral} from '@mistralai/mistralai'
 import Mistral from '@mistralai/mistralai';
-import {MistralOptions} from '../options'
+import {MistralOptions} from './options'
 
 // import for Claude API
 

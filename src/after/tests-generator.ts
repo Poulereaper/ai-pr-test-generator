@@ -1,7 +1,7 @@
 import {info, warning} from '@actions/core'
 import {context as github_context} from '@actions/github'
 import {COMMENT_REPLY_TAG, Commenter} from './commenter'
-import {Bot, Ids} from '../changed/bot'
+import {Bot, Ids} from '../bot'
 import {Inputs} from '../inputs'
 import {Options} from '../options'
 import {Prompts} from './prompts'

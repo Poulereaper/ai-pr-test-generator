@@ -9,7 +9,7 @@ import {
 import * as github from '@actions/github'
 import {context as github_context} from '@actions/github'
 
-import {Bot, createBot} from './changed/bot'
+import {Bot, createBot} from './bot'
 import {OpenAIOptions, Options} from './options'
 import {ClaudeOptions} from './options'
 import {MistralOptions} from './options'

@@ -2,7 +2,7 @@ import {error, info, warning} from '@actions/core'
 // eslint-disable-next-line camelcase
 import {context as github_context} from '@actions/github'
 import pLimit from 'p-limit'
-import {type Bot} from './bot'
+import {type Bot} from '../bot'
 import {
   Commenter,
   COMMENT_REPLY_TAG,
