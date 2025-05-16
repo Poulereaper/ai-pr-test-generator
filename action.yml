@@ -157,7 +157,7 @@ inputs:
     description:
       'Decide if we use only one or two models, if not available, the default model will be used.'
     default: 'true'
-  aiLightModel:
+  ai_light_model:
     required: false
     description: 'The light model to use. This project will provide support for
       - OpenAI API : gpt-3.5-turbo
@@ -165,7 +165,7 @@ inputs:
       - Mistral AI API : mistral-small-latest
       - Gemini AI API : gemini-1.5-turbo'
     default: 'mistral-small-latest'
-  aiHeavyModel:
+  ai_heavy_model:
     required: false
     description: 'The heavy model to use. This project will provide support for
       - OpenAI API : gpt-4
