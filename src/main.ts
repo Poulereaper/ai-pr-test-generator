@@ -137,7 +137,7 @@ async function run(): Promise<void> {
       return
     }
     // Check for required API base URL
-    if (options.apiBaseUrl === '') {
+    if (options.apiBaseUrl === '' && options.aiapi !== 'mistral') {
       setFailed(`${options.aiapi} base url is required`)
       return
     }
