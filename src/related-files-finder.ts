@@ -1,7 +1,6 @@
 
 import {warning, info} from '@actions/core'
 import {context as github_context} from '@actions/github'
-import {Octokit} from '@octokit/rest'
 import type { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/parameters-and-response-types'
 import type { Api } from '@octokit/plugin-rest-endpoint-methods/dist-types/types'
 import type { PaginateInterface } from '@octokit/plugin-paginate-rest'
@@ -15,6 +14,9 @@ import traverse from '@babel/traverse'
 import {octokit } from './octokit'
 import {Options} from './options'
 
+// eslint-disable-next-line camelcase
+//const context = github_context
+//const repo = context.repo
 
 
 // ========= Types for the Files Info Class ==========

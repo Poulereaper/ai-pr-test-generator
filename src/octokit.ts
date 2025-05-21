@@ -1,5 +1,5 @@
 import {getInput, warning} from '@actions/core'
-import {Octokit} from '@octokit/action'
+import {Octokit} from '@octokit/core'
 import {retry} from '@octokit/plugin-retry'
 import {throttling} from '@octokit/plugin-throttling'
 import {restEndpointMethods} from '@octokit/plugin-rest-endpoint-methods'
@@ -7,7 +7,7 @@ import {paginateRest} from '@octokit/plugin-paginate-rest'
 
 const token = getInput('token') || process.env.GITHUB_TOKEN
 
-const RetryAndThrottlingOctokit = Octokit.plugin(throttling, retry)
+const RetryAndThrottlingOctokit = Octokit.plugin(throttling, retry, restEndpointMethods, paginateRest)
 
 export const octokit = new RetryAndThrottlingOctokit({
   auth: `token ${token}`,
@@ -44,3 +44,5 @@ Retry count: ${retryCount}
     }
   }
 })
+
+
