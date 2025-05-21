@@ -22,6 +22,7 @@ export class Options {
   lightTokenLimits: TokenLimits
   heavyTokenLimits: TokenLimits
   apiBaseUrl: string
+  botName: string
   language: string
 
   constructor(
@@ -42,6 +43,7 @@ export class Options {
     aiConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
     apiBaseUrl = 'https://api.openai.com/v1',
+    botName = 'Test Generator Bot',
     language = 'en-US'
   ) {
     this.debug = debug
@@ -63,6 +65,7 @@ export class Options {
     this.lightTokenLimits = new TokenLimits(aiLightModel)
     this.heavyTokenLimits = new TokenLimits(aiHeavyModel)
     this.apiBaseUrl = apiBaseUrl
+    this.botName = botName
     this.language = language
   }
 
@@ -75,7 +78,7 @@ export class Options {
     info(`review_comment_lgtm: ${this.reviewCommentLGTM}`)
     info(`path_filters: ${this.pathFilters}`)
     info(`system_message: ${this.systemMessage}`)
-    info(`api: ${this.aiapi}`)
+    info(`ai_api: ${this.aiapi}`)
     info(`ai_light_model_uses: ${this.aiLightModeluses}`)
     info(`ai_light_model: ${this.aiLightModel}`)
     info(`ai_heavy_model: ${this.aiHeavyModel}`)
@@ -86,7 +89,8 @@ export class Options {
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
     info(`summary_token_limits: ${this.lightTokenLimits.string()}`)
     info(`review_token_limits: ${this.heavyTokenLimits.string()}`)
-    info(`api_base_url: ${this.apiBaseUrl}`)
+    info(`ai_api_base_url: ${this.apiBaseUrl}`)
+    info(`bot_name: ${this.botName}`)
     info(`language: ${this.language}`)
   }
 

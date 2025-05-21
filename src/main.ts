@@ -40,7 +40,8 @@ async function run(): Promise<void> {
     getInput('ai_timeout_ms'),
     getInput('ai_concurrency_limit'),
     getInput('github_concurrency_limit'),
-    getInput('openai_base_url'),
+    getInput('ai_api_base_url'),
+    getInput('your_test_gen_bot_name'),
     getInput('language')
   )
 
@@ -168,6 +169,7 @@ async function run(): Promise<void> {
     }
   }
 
+info ('${options.botName} bot created successfully')
 
 // ========== Files Analysis =======
 // Before analysing the PR we need to check the files changed in the PR and find all their related files and related tests
