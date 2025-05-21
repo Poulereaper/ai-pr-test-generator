@@ -1,17 +1,20 @@
+
 import {warning, info} from '@actions/core'
 import {context as github_context} from '@actions/github'
-import * as github from '@actions/github'
 import {Octokit} from '@octokit/rest'
-import { RestEndpointMethodTypes } from '@octokit/action'
-import {Api} from '@octokit/plugin-rest-endpoint-methods/dist-types/types'
-import {PaginateInterface} from '@octokit/plugin-paginate-rest'
+import type { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/parameters-and-response-types'
+import type { Api } from '@octokit/plugin-rest-endpoint-methods/dist-types/types'
+import type { PaginateInterface } from '@octokit/plugin-paginate-rest'
 //import type {NodePath} from '@babel/traverse'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as parser from '@babel/parser'
 import traverse from '@babel/traverse'
 
+// Import the custom Octokit instance from octokit.ts
+import {octokit } from './octokit'
 import {Options} from './options'
+
 
 
 // ========= Types for the Files Info Class ==========
@@ -48,7 +51,6 @@ export interface FileData {
 
 export class FilesInfo {
   private files: Map<string, FileData> = new Map()
-  private readonly octokit: Octokit
   private readonly options: Options
   private readonly testPatterns: RegExp[] = [
     /\.test\.[jt]sx?$/,      // matches .test.js, .test.ts, .test.jsx, .test.tsx
@@ -63,16 +65,6 @@ export class FilesInfo {
 
   constructor(options?: Options) {
     this.options = options || new Options(false, false) //If no options are provided, use default options
-    
-    // Initialize the octokit client
-    const token = process.env.GITHUB_TOKEN
-    if (!token) {
-      warning('GITHUB_TOKEN is not set. File analysis will be limited.')
-      // @ts-ignore - We'll handle the null case separately
-      this.octokit = null
-    } else {
-        this.octokit = github.getOctokit(token) as Octokit & RestEndpointMethodTypes & Api & { paginate: PaginateInterface }
-    }
   }
 
   /**
@@ -119,13 +111,9 @@ export class FilesInfo {
    * Get all files that were modified in the current PR
    */
   private async getModifiedFiles(): Promise<{path: string}[]> {
-    if (!this.octokit) {
-      warning('Octokit not initialized. Cannot fetch modified files.')
-      return []
-    }
 
     try {
-      const {data: filesData} = await this.octokit.pulls.listFiles({
+      const {data: filesData} = await octokit.rest.pulls.listFiles({
         owner: github_context.repo.owner,
         repo: github_context.repo.repo,
         pull_number: github_context.issue.number
@@ -142,13 +130,8 @@ export class FilesInfo {
    * Get the diff for a specific file in the current PR
    */
   private async getFileDiff(filePath: string): Promise<string> {
-    if (!this.octokit) {
-      warning(`Octokit not initialized. Cannot fetch diff for ${filePath}`)
-      return ''
-    }
-
     try {
-      const {data: filesData} = await this.octokit.pulls.listFiles({
+      const {data: filesData} = await octokit.rest.pulls.listFiles({
         owner: github_context.repo.owner,
         repo: github_context.repo.repo,
         pull_number: github_context.issue.number
@@ -166,13 +149,8 @@ export class FilesInfo {
    * Get the content of a file from the repository
    */
   private async getFileContent(filePath: string): Promise<string | undefined> {
-    if (!this.octokit) {
-      warning(`Octokit not initialized. Cannot fetch content for ${filePath}`)
-      return undefined
-    }
-
     try {
-      const {data} = await this.octokit.repos.getContent({
+      const {data} = await octokit.rest.repos.getContent({
         owner: github_context.repo.owner,
         repo: github_context.repo.repo,
         path: filePath,

@@ -169,7 +169,7 @@ async function run(): Promise<void> {
     }
   }
 
-info ('${options.botName} bot created successfully')
+info (`${options.botName} bot created successfully`)
 
 // ========== Files Analysis =======
 // Before analysing the PR we need to check the files changed in the PR and find all their related files and related tests
