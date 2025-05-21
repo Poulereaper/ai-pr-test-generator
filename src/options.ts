@@ -22,6 +22,7 @@ export class Options {
   lightTokenLimits: TokenLimits
   heavyTokenLimits: TokenLimits
   apiBaseUrl: string
+  diffList: string
   botName: string
   language: string
 
@@ -43,6 +44,7 @@ export class Options {
     aiConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
     apiBaseUrl = 'https://api.openai.com/v1',
+    diffList = 'diff',
     botName = 'Test Generator Bot',
     language = 'en-US'
   ) {
@@ -65,6 +67,7 @@ export class Options {
     this.lightTokenLimits = new TokenLimits(aiLightModel)
     this.heavyTokenLimits = new TokenLimits(aiHeavyModel)
     this.apiBaseUrl = apiBaseUrl
+    this.diffList = diffList
     this.botName = botName
     this.language = language
   }
@@ -90,6 +93,7 @@ export class Options {
     info(`summary_token_limits: ${this.lightTokenLimits.string()}`)
     info(`review_token_limits: ${this.heavyTokenLimits.string()}`)
     info(`ai_api_base_url: ${this.apiBaseUrl}`)
+    info(`diff_list: ${this.diffList}`)
     info(`bot_name: ${this.botName}`)
     info(`language: ${this.language}`)
   }

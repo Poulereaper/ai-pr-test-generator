@@ -72,10 +72,10 @@ export class FilesInfo {
   /**
    * Processes files modified in the current PR to find related files and tests
    */
-  public async processModifiedFiles(): Promise<void> {
+  public async processModifiedFiles(diff_file: { filename: string }[]): Promise<void> {
     try {
       // Step 2: Get the files name and their full path in the PR
-      const modifiedFiles = await this.getModifiedFiles()
+      const modifiedFiles = diff_file.map((file: { filename: string }) => ({ path: file.filename }))
       
       for (const file of modifiedFiles) {
         // Step 3: Get the diff of each file separately
