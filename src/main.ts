@@ -194,7 +194,6 @@ async function run(): Promise<void> {
     getInput('ai_concurrency_limit'),
     getInput('github_concurrency_limit'),
     getInput('ai_api_base_url'),
-    getInput('diff_file'),
     getInput('your_test_gen_bot_name'),
     getInput('language')
   )
@@ -341,8 +340,7 @@ try {
   filesInfo = new FilesInfo(options)
   
   // Process all modified files
-  const diffList = options.diffList.split('\n').map(filename => ({ filename }));
-  await filesInfo.processModifiedFiles(diffList);
+  await filesInfo.processModifiedFiles()
   
   // Get the dependencies and test files
   filesDependencies = filesInfo.getAllFiles()
@@ -366,6 +364,7 @@ try {
   setFailed(`Files analysis failed: ${e.message}, backtrace: ${e.stack}`)
   return
 }
+
 
 // ======== PR Analysis ========
 // This is a test version, we will use differetns files in the future
