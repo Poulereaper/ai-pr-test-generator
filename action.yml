@@ -1,11 +1,36 @@
-- name: Get Git diff with path filters
-  id: get_diff
-  run: |
-    echo "Fetching main branch..."
-    git fetch origin main
-    
-    # Create a temporary file with path filters
-    cat > path_filters.txt << 'EOL'
+name: 'AI-based PR Test Generator'
+description: 'AI-based PR that cheks the code changes and generates test cases if needed'
+branding:
+  icon: 'git-merge'
+  color: 'purple'
+author: 'CISO ASSISTANT TEAM' 
+inputs:
+  debug:
+    required: false
+    description: 'Enable debug mode'
+    default: 'false'
+  max_files:
+    required: false
+    description:
+      'Max files to summarize and review. Less than or equal to 0 means no
+      limit.'
+    default: '150'
+  review_simple_changes:
+    required: false
+    description: 'Review even when the changes are simple'
+    default: 'false'
+  review_comment_lgtm:
+    required: false
+    description: 'Leave comments even if the patch is LGTM'
+    default: 'false'
+    required: false
+    description: |
+      The path filters, e.g., "src/**.py", "!dist/**", each line will be considered as one pattern.
+      See also
+
+      - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
+      - https://github.com/isaacs/minimatch
+    default: |
       !dist/**
       !**/*.app
       !**/*.bin
@@ -110,229 +135,128 @@
       !**/*.min.js.css
       !**/*.tfstate
       !**/*.tfstate.backup
-    EOL
-    
-    # Function to get filtered files
-    filter_files() {
-      local diff_files=$1
-      local temp_file=$(mktemp)
-      
-      # Get the list of all files in diff
-      cat $diff_files > $temp_file
-      
-      # Apply path filters - Include only files not matching the ignore patterns
-      while IFS= read -r file; do
-        ignore=false
-        while IFS= read -r pattern; do
-          # Skip empty lines
-          [ -z "$pattern" ] && continue
-          
-          # For patterns starting with !, these are exclusions (files to ignore)
-          if [[ "$pattern" == !* ]]; then
-            # Remove the leading ! to get the actual pattern
-            pattern="${pattern:1}"
-            # Use minimatch-style pattern matching with basic shell globbing
-            if [[ "$file" == $pattern ]]; then
-              ignore=true
-              break
-            fi
-          fi
-        done < path_filters.txt
-        
-        # If file should not be ignored, add it to filtered output
-        if [ "$ignore" = false ]; then
-          # Get absolute path by prepending repo root
-          echo "$(pwd)/$file"
-        fi
-      done < $temp_file > filtered_files.txt
-      
-      rm $temp_file
-    }
-    
-    if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-      echo "Getting PR diff for the entire project..."
-      git diff origin/main...HEAD > project_diff.patch
-      git diff origin/main...HEAD --name-only > all_diff_files.txt
-    else
-      echo "Getting push diff for the entire project..."
-      git diff HEAD^..HEAD > project_diff.patch
-      git diff HEAD^..HEAD --name-only > all_diff_files.txt
-    fi
-    
-    # Filter the files based on path filters
-    filter_files all_diff_files.txt
-    
-    echo "Total diff files: $(wc -l < all_diff_files.txt)"
-    echo "Filtered diff files: $(wc -l < filtered_files.txt)"
-    echo "Filtered files (avec chemins absolus):"
-    cat filtered_files.txt
-    
-    # Store the filtered files as output
-    echo "filtered_files<<EOF" >> $GITHUB_OUTPUT
-    cat filtered_files.txt >> $GITHUB_OUTPUT
-    echo "EOF" >> $GITHUB_OUTPUT
+  disable_test:
+    required: false
+    description: 'Only provide the information that the code could need test modificatioon and skip suggestion of tests.'
+    default: 'false'
+  ai_api_base_url:
+    required: false
+    description: 'The url of the openai api interface.'
+    default: 'https://api.openai.com/v1'
+  ai_api:
+    required: false
+    description: 'The AI API to use. This project will provide support for
+      - OpenAI API : openai
+      - Claude AI API : claude
+      - Mistral AI API : mistral
+      - Gemini AI API : gemini'
+    default: 'mistral'
+  ai_light_model_uses:
+    required: false
+    description:
+      'Decide if we use only one or two models, if not available, the default model will be used.'
+    default: 'true'
+  ai_light_model:
+    required: false
+    description: 'The light model to use. This project will provide support for
+      - OpenAI API : gpt-3.5-turbo
+      - Claude AI API : claude-instant
+      - Mistral AI API : mistral-small-latest
+      - Gemini AI API : gemini-1.5-turbo'
+    default: 'mistral-small-latest'
+  ai_heavy_model:
+    required: false
+    description: 'The heavy model to use. This project will provide support for
+      - OpenAI API : gpt-4
+      - Claude AI API : claude
+      - Mistral AI API : mistral
+      - Gemini AI API : gemini'
+    default: 'mistral-large-latest  '
+  ai_model_temperature:
+    required: false
+    description: 'Temperature for model if available'
+    default: '0.05'
+  ai_retries:
+    required: false
+    description:
+      'How many times to retry AI API in case of timeouts or errors?'
+    default: '5'
+  ai_timeout_ms:
+    required: false
+    description: 'Timeout for AI API call in millis'
+    default: '360000'
+  ai_concurrency_limit:
+    required: false
+    description: 'How many concurrent API calls to make to AI servers?'
+    default: '6'
+  your_test_gen_bot_name:
+    required: false
+    description: 'The name of the bot that will be used to comment on the PR - Feel free to change it to your own bot name ;)'
+    default: 'AI Test Generator Bot'
+  github_concurrency_limit:
+    required: false
+    description: 'How many concurrent API calls to make to GitHub?'
+    default: '6'
+  system_message:
+    required: false
+    description: 'System message to be sent to OpenAI'
+    default: |
+      You are `@coderabbitai` (aka `github-actions[bot]`), a language model 
+      trained by OpenAI. Your purpose is to act as a highly experienced 
+      software engineer and provide a thorough review of the code hunks
+      and suggest code snippets to improve key areas such as:
+        - Logic
+        - Security
+        - Performance
+        - Data races
+        - Consistency
+        - Error handling
+        - Maintainability
+        - Modularity
+        - Complexity
+        - Optimization
+        - Best practices: DRY, SOLID, KISS
 
-- name: 'AI-based PR Test Generator'
-  description: 'AI-based PR that cheks the code changes and generates test cases if needed'
-  branding:
-    icon: 'git-merge'
-    color: 'purple'
-  author: 'CISO ASSISTANT TEAM' 
-  inputs:
-    debug:
-      required: false
-      description: 'Enable debug mode'
-      default: 'false'
-    max_files:
-      required: false
-      description:
-        'Max files to summarize and review. Less than or equal to 0 means no
-        limit.'
-      default: '150'
-    review_simple_changes:
-      required: false
-      description: 'Review even when the changes are simple'
-      default: 'false'
-    review_comment_lgtm:
-      required: false
-      description: 'Leave comments even if the patch is LGTM'
-      default: 'false'
-    path_filters:
-      required: false
-      description: |
-        The path filters, e.g., "src/**.py", "!dist/**", each line will be considered as one pattern.
-        See also
+      Do not comment on minor code style issues, missing 
+      comments/documentation. Identify and resolve significant 
+      concerns to improve overall code quality while deliberately 
+      disregarding minor issues.
+  summarize:
+    required: false
+    description: 'The prompt for final summarization response'
+    default: |
+      Provide your final response in markdown with the following content:
 
-        - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
-        - https://github.com/isaacs/minimatch
-      default: |
-        !dist/**
-    disable_test:
-      required: false
-      description: 'Only provide the information that the code could need test modificatioon and skip suggestion of tests.'
-      default: 'false'
-    ai_api_base_url:
-      required: false
-      description: 'The url of the openai api interface.'
-      default: 'https://api.openai.com/v1'
-    ai_api:
-      required: false
-      description: 'The AI API to use. This project will provide support for
-        - OpenAI API : openai
-        - Claude AI API : claude
-        - Mistral AI API : mistral
-        - Gemini AI API : gemini'
-      default: 'mistral'
-    ai_light_model_uses:
-      required: false
-      description:
-        'Decide if we use only one or two models, if not available, the default model will be used.'
-      default: 'true'
-    ai_light_model:
-      required: false
-      description: 'The light model to use. This project will provide support for
-        - OpenAI API : gpt-3.5-turbo
-        - Claude AI API : claude-instant
-        - Mistral AI API : mistral-small-latest
-        - Gemini AI API : gemini-1.5-turbo'
-      default: 'mistral-small-latest'
-    ai_heavy_model:
-      required: false
-      description: 'The heavy model to use. This project will provide support for
-        - OpenAI API : gpt-4
-        - Claude AI API : claude
-        - Mistral AI API : mistral
-        - Gemini AI API : gemini'
-      default: 'mistral-large-latest  '
-    ai_model_temperature:
-      required: false
-      description: 'Temperature for model if available'
-      default: '0.05'
-    ai_retries:
-      required: false
-      description:
-        'How many times to retry AI API in case of timeouts or errors?'
-      default: '5'
-    ai_timeout_ms:
-      required: false
-      description: 'Timeout for AI API call in millis'
-      default: '360000'
-    ai_concurrency_limit:
-      required: false
-      description: 'How many concurrent API calls to make to AI servers?'
-      default: '6'
-    your_test_gen_bot_name:
-      required: false
-      description: 'The name of the bot that will be used to comment on the PR - Feel free to change it to your own bot name ;)'
-      default: 'AI Test Generator Bot'
-    github_concurrency_limit:
-      required: false
-      description: 'How many concurrent API calls to make to GitHub?'
-      default: '6'
-    diff_file:
-      required: false
-      description: 'The diff file that has been generated by the previous step'
-      default: ${{ steps.get_diff.outputs.filtered_files }}
-    system_message:
-      required: false
-      description: 'System message to be sent to OpenAI'
-      default: |
-        You are `@coderabbitai` (aka `github-actions[bot]`), a language model 
-        trained by OpenAI. Your purpose is to act as a highly experienced 
-        software engineer and provide a thorough review of the code hunks
-        and suggest code snippets to improve key areas such as:
-          - Logic
-          - Security
-          - Performance
-          - Data races
-          - Consistency
-          - Error handling
-          - Maintainability
-          - Modularity
-          - Complexity
-          - Optimization
-          - Best practices: DRY, SOLID, KISS
+      - **Walkthrough**: A high-level summary of the overall change instead of 
+        specific files within 80 words.
+      - **Changes**: A markdown table of files and their summaries. Group files 
+        with similar changes together into a single row to save space.
+      - **Poem**: Below the changes, include a whimsical, short poem written by 
+        a rabbit to celebrate the changes. Format the poem as a quote using 
+        the ">" symbol and feel free to use emojis where relevant.
 
-        Do not comment on minor code style issues, missing 
-        comments/documentation. Identify and resolve significant 
-        concerns to improve overall code quality while deliberately 
-        disregarding minor issues.
-    summarize:
-      required: false
-      description: 'The prompt for final summarization response'
-      default: |
-        Provide your final response in markdown with the following content:
+      Avoid additional commentary as this summary will be added as a comment on the 
+      GitHub pull request. Use the titles "Walkthrough" and "Changes" and they must be H2.
 
-        - **Walkthrough**: A high-level summary of the overall change instead of 
-          specific files within 80 words.
-        - **Changes**: A markdown table of files and their summaries. Group files 
-          with similar changes together into a single row to save space.
-        - **Poem**: Below the changes, include a whimsical, short poem written by 
-          a rabbit to celebrate the changes. Format the poem as a quote using 
-          the ">" symbol and feel free to use emojis where relevant.
-
-        Avoid additional commentary as this summary will be added as a comment on the 
-        GitHub pull request. Use the titles "Walkthrough" and "Changes" and they must be H2.
-
-    summarize_release_notes:
-      required: false
-      description:
-        'The prompt for generating release notes in the same chat as summarize
-        stage'
-      default: |
-        Craft concise release notes for the pull request. 
-        Focus on the purpose and user impact, categorizing changes as "New Feature", "Bug Fix", 
-        "Documentation", "Refactor", "Style", "Test", "Chore", or "Revert". Provide a bullet-point list, 
-        e.g., "- New Feature: Added search functionality to the UI". Limit your response to 50-100 words 
-        and emphasize features visible to the end-user while omitting code-level details.
-    language:
-      required: false
-      description: ISO code for the response language
-      default: en-US
-    bot_icon:
-      required: false
-      description: 'The icon for the bot'
-      default: '<img src="https://avatars.githubusercontent.com/in/347564?s=41" alt="Image description" width="20" height="20">'
-  runs:
-    using: 'node16'
-    main: 'dist/index.js'
+  summarize_release_notes:
+    required: false
+    description:
+      'The prompt for generating release notes in the same chat as summarize
+      stage'
+    default: |
+      Craft concise release notes for the pull request. 
+      Focus on the purpose and user impact, categorizing changes as "New Feature", "Bug Fix", 
+      "Documentation", "Refactor", "Style", "Test", "Chore", or "Revert". Provide a bullet-point list, 
+      e.g., "- New Feature: Added search functionality to the UI". Limit your response to 50-100 words 
+      and emphasize features visible to the end-user while omitting code-level details.
+  language:
+    required: false
+    description: ISO code for the response language
+    default: en-US
+  bot_icon:
+    required: false
+    description: 'The icon for the bot'
+    default: '<img src="https://avatars.githubusercontent.com/in/347564?s=41" alt="Image description" width="20" height="20">'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
