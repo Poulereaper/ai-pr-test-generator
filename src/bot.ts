@@ -62,8 +62,8 @@ export function createBot(options: Options, modelOptions: any): Bot {
 // Indications about the bots --> Need to be updated
 /** 
 They will need only one use case :
-Our bot leave a comment under a PR that need new tests
-Then the user is allowed to choose either to summarize what tests should be modified or created by highlining modifications, or generate tests for a choosen file.
+Our bot leave a comment under a PR that need new tests -> Done in the main.ts
+Then the user is allowed to choose either to summarize what tests should be modified or created by highlining modifications, or generate tests for a choosen file. -> input will be collected in the main.ts = action + file 
 The bot will then juste need to get the pre prompt, the files and dependancies based on the user choice and the files modified in the PR.
 */
 

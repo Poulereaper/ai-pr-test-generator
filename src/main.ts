@@ -16,9 +16,162 @@ import {MistralOptions} from './options'
 import {GeminiOptions} from './options'
 //import {Prompts} from './use_in_future/prompts'
 import {FilesInfo, FileData} from './related-files-finder'
+import {octokit} from './octokit'
 
 //import {codeReview} from './review'
 //import {handleReviewComment} from './review-comment'
+
+
+// ======= Utility Functions for Command Parsing =======
+
+interface UserCommand {
+  action: 'generate tests' | 'explain tests' | 'sec check'
+  filename: string
+}
+
+interface ValidationResult {
+  valid: boolean
+  error?: string
+}
+
+/**
+ * Parse user command from comment body
+ * Expected formats:
+ * - "generate tests <filename>"
+ * - "explain tests <filename>"
+ * - "sec check <filename>"
+ */
+function parseUserCommand(commentBody: string): UserCommand | null {
+  const normalizedComment = commentBody.toLowerCase().trim()
+  
+  // Regular expressions for each command type
+  const generateTestsRegex = /generate\s+tests\s+(.+)/
+  const explainTestsRegex = /explain\s+tests\s+(.+)/
+  const secCheckRegex = /sec\s+check\s+(.+)/
+  
+  let match: RegExpMatchArray | null = null
+  let action: UserCommand['action'] | null = null
+  
+  if ((match = normalizedComment.match(generateTestsRegex))) {
+    action = 'generate tests'
+  } else if ((match = normalizedComment.match(explainTestsRegex))) {
+    action = 'explain tests'
+  } else if ((match = normalizedComment.match(secCheckRegex))) {
+    action = 'sec check'
+  }
+  
+  if (match && action) {
+    const filename = match[1].trim()
+    // Remove potential backticks if user wrapped filename in code blocks
+    const cleanFilename = filename.replace(/`/g, '')
+    
+    if (cleanFilename) {
+      return {
+        action,
+        filename: cleanFilename
+      }
+    }
+  }
+  
+  return null
+}
+
+/**
+ * Validate that the requested file exists in our analysis
+ */
+function validateRequestedFile(
+  filename: string, 
+  filesInfo: FilesInfo | null, 
+  filesDependencies: Map<string, FileData>
+): ValidationResult {
+  if (!filesInfo) {
+    return {
+      valid: false,
+      error: 'Files analysis not available'
+    }
+  }
+  
+  // Check if file exists in our dependencies map
+  if (filesDependencies.has(filename)) {
+    return { valid: true }
+  }
+  
+  // Check if it's one of the modified files
+  const modifiedFiles = filesInfo.getModifiedFilesData()
+  const fileExists = modifiedFiles.some(file => file.path === filename)
+  
+  if (fileExists) {
+    return { valid: true }
+  }
+  
+  // Check if it's one of the test files that need modification
+  const testsToModify = filesInfo.getTestsToModify()
+  if (testsToModify.includes(filename)) {
+    return { valid: true }
+  }
+  
+  return {
+    valid: false,
+    error: `File "${filename}" was not found in the analysis. Please make sure the filename is correct and that it's part of this PR.`
+  }
+}
+
+/**
+ * Generate a helpful message listing available files
+ */
+function getAvailableFilesMessage(
+  filesInfo: FilesInfo | null, 
+  filesDependencies: Map<string, FileData>
+): string {
+  if (!filesInfo) {
+    return 'No files available for analysis.'
+  }
+  
+  let message = '**Available files for analysis:**\n\n'
+  
+  // Add modified files
+  const modifiedFiles = filesInfo.getModifiedFilesData()
+  if (modifiedFiles.length > 0) {
+    message += '📝 **Modified files:**\n'
+    modifiedFiles.forEach(file => {
+      message += `- \`${file.path}\`\n`
+    })
+    message += '\n'
+  }
+  
+  // Add test files that might need updates
+  const testsToModify = filesInfo.getTestsToModify()
+  if (testsToModify.length > 0) {
+    message += '🧪 **Test files that might need updates:**\n'
+    testsToModify.forEach(testPath => {
+      message += `- \`${testPath}\`\n`
+    })
+    message += '\n'
+  }
+  
+  // Add related files if they exist
+  const relatedFiles = Array.from(filesDependencies.keys()).filter(
+    path => !modifiedFiles.some(f => f.path === path) && !testsToModify.includes(path)
+  )
+  if (relatedFiles.length > 0) {
+    message += '🔗 **Related files:**\n'
+    relatedFiles.slice(0, 10).forEach(path => { // Limit to first 10 to avoid too long messages
+      message += `- \`${path}\`\n`
+    })
+    if (relatedFiles.length > 10) {
+      message += `... and ${relatedFiles.length - 10} more files\n`
+    }
+  }
+  
+  return message
+}
+
+
+
+
+
+
+
 
   // ======= Options ========
 
@@ -217,122 +370,166 @@ try {
 // ======== PR Analysis ========
 // This is a test version, we will use differetns files in the future
 
-  try {
-    // check if the event is pull_request
-    if (
-      process.env.GITHUB_EVENT_NAME === 'pull_request' ||
-      process.env.GITHUB_EVENT_NAME === 'pull_request_target'
-    ) {
-        //For the moment we will only leave a comment with files that need tests and respond to the comment with "Okay" if the user asks for it
-        if (options.debug) {
-          info('Processing pull request event')
-        }
-        
-        // Get the octokit instance
-        const token = process.env.GITHUB_TOKEN
-        if (!token) {
-          setFailed('GITHUB_TOKEN is required for commenting on PRs')
-          return
-        }
-        const octokit = github.getOctokit(token)
-        
-        // Check if we have test files that need to be updated
-        if (testsToModify.length > 0 || filesInfo?.getModifiedFilesData().some(file => !file.isTest && file.testFiles.length === 0)) {
-          // Prepare the comment
-          let commentBody = `## AI Test Generator Bot Report\n\n`
-          commentBody += `I've analyzed this PR and found some files that might need test updates:\n\n`
-          
-          // Add files with missing tests
-          const filesWithoutTests = filesInfo?.getModifiedFilesData().filter(file => !file.isTest && file.testFiles.length === 0) || []
-          if (filesWithoutTests.length > 0) {
-            commentBody += `### Files without tests:\n`
-            filesWithoutTests.forEach(file => {
-              commentBody += `- \`${file.path}\`\n`
-            })
-            commentBody += `\n`
-          }
-          
-          // Add tests that might need updates
-          if (testsToModify.length > 0) {
-            commentBody += `### Tests that might need updates:\n`
-            testsToModify.forEach(testPath => {
-              commentBody += `- \`${testPath}\`\n`
-            })
-            commentBody += `\n`
-          }
-          
-          // Add instructions for the user
-          commentBody += `Reply to this comment with "generate tests" if you'd like me to suggest test implementations.\n`
-          
-          // Post the comment
-          await octokit.rest.issues.createComment({
-            owner: github_context.repo.owner,
-            repo: github_context.repo.repo,
-            issue_number: github_context.issue.number,
-            body: commentBody
-          })
-          
-          if (options.debug) {
-            info('Posted comment about files needing tests')
-          }
-        } else {
-          info('No files needing tests were detected. Skipping comment.')
-        }
-
-    } else if (
-      process.env.GITHUB_EVENT_NAME === 'pull_request_review_comment' ||
-      process.env.GITHUB_EVENT_NAME === 'issue_comment'
-    ) {
-      // Respond to the comment with "Okay" if the user asks for tests
+try {
+  // check if the event is pull_request
+  if (
+    process.env.GITHUB_EVENT_NAME === 'pull_request' ||
+    process.env.GITHUB_EVENT_NAME === 'pull_request_target'
+  ) {
+      //For the moment we will only leave a comment with files that need tests and respond to the comment with "Okay" if the user asks for it
       if (options.debug) {
-        info('Processing comment event')
+        info('Processing pull request event')
       }
       
-      // Get the comment information from context
-      const payload = github_context.payload
-      const comment = payload.comment
-      
-      if (!comment) {
-        warning('No comment found in payload')
+      // Vérification que le token est disponible (déjà gérée dans octokit.ts)
+      if (!process.env.GITHUB_TOKEN && !getInput('token')) {
+        setFailed('GITHUB_TOKEN is required for commenting on PRs')
         return
       }
       
-      // Check if the comment asks for test generation
-      if (comment.body.toLowerCase().includes('generate tests')) {
-        // Get the octokit instance
-        const token = process.env.GITHUB_TOKEN
-        if (!token) {
-          setFailed('GITHUB_TOKEN is required for commenting on PRs')
-          return
-        }
-        const octokit = github.getOctokit(token)
+      // Check if we have test files that need to be updated
+      if (testsToModify.length > 0 || filesInfo?.getModifiedFilesData().some(file => !file.isTest && file.testFiles.length === 0)) {
+        // Prepare the comment
+        let commentBody = `## AI Test Generator Bot Report\n\n`
+        commentBody += `I've analyzed this PR and found some files that might need test updates:\n\n`
         
-        // Reply with "Okay"
+        // Add files with missing tests
+        const filesWithoutTests = filesInfo?.getModifiedFilesData().filter(file => !file.isTest && file.testFiles.length === 0) || []
+        if (filesWithoutTests.length > 0) {
+          commentBody += `### Files without tests:\n`
+          filesWithoutTests.forEach(file => {
+            commentBody += `- \`${file.path}\`\n`
+          })
+          commentBody += `\n`
+        }
+        
+        // Add tests that might need updates
+        if (testsToModify.length > 0) {
+          commentBody += `### Tests that might need updates:\n`
+          testsToModify.forEach(testPath => {
+            commentBody += `- \`${testPath}\`\n`
+          })
+          commentBody += `\n`
+        }
+        
+        // Add instructions for the user
+        commentBody += `### How to use:\n`
+        commentBody += `Reply to this comment with one of these commands:\n`
+        commentBody += `- \`generate tests <filename>\` - Generate test implementations for a specific file\n`
+        commentBody += `- \`explain tests <filename>\` - Explain what tests should be implemented for a specific file\n`
+        commentBody += `- \`sec check <filename>\` - Check for potential security vulnerabilities in a specific file\n\n`
+        commentBody += `**Example:** \`generate tests src/utils/helper.ts\`\n`
+        
+        // Post the comment using your octokit module
         await octokit.rest.issues.createComment({
           owner: github_context.repo.owner,
           repo: github_context.repo.repo,
           issue_number: github_context.issue.number,
-          body: `Okay! I'll generate test suggestions soon. (This is a placeholder for the actual test generation functionality.)`
+          body: commentBody
         })
         
         if (options.debug) {
-          info('Replied to user request for test generation')
+          info('Posted comment about files needing tests')
         }
       } else {
-        if (options.debug) {
-          info('Comment does not request test generation, ignoring')
-        }
+        info('No files needing tests were detected. Skipping comment.')
+      }
+
+  } else if (
+    process.env.GITHUB_EVENT_NAME === 'pull_request_review_comment' ||
+    process.env.GITHUB_EVENT_NAME === 'issue_comment'
+  ) {
+    // Respond to the comment with "Okay" if the user asks for tests
+    if (options.debug) {
+      info('Processing comment event')
+    }
+    
+    // Get the comment information from context
+    const payload = github_context.payload
+    const comment = payload.comment
+    
+    if (!comment) {
+      warning('No comment found in payload')
+      return
+    }
+    
+    // Parse user command from comment
+    const userCommand = parseUserCommand(comment.body)
+    
+    if (userCommand) {
+      // Vérification que le token est disponible (déjà gérée dans octokit.ts)
+      if (!process.env.GITHUB_TOKEN && !getInput('token')) {
+        setFailed('GITHUB_TOKEN is required for commenting on PRs')
+        return
+      }
+      
+      // Validate that the requested file exists in our analysis
+      const isValidFile = validateRequestedFile(userCommand.filename, filesInfo, filesDependencies)
+      
+      if (!isValidFile.valid) {
+        await octokit.rest.issues.createComment({
+          owner: github_context.repo.owner,
+          repo: github_context.repo.repo,
+          issue_number: github_context.issue.number,
+          body: `❌ **Error**: ${isValidFile.error}\n\n${getAvailableFilesMessage(filesInfo, filesDependencies)}`
+        })
+        return
+      }
+      
+      // Prepare response based on user choice
+      let responseBody = `✅ **Command received**: \`${userCommand.action} ${userCommand.filename}\`\n\n`
+      
+      switch (userCommand.action) {
+        case 'generate tests':
+          responseBody += `🔧 **Action**: Generating test implementations\n`
+          responseBody += `📁 **Target file**: \`${userCommand.filename}\`\n\n`
+          responseBody += `I will now generate comprehensive test implementations for this file.\n`
+          // TODO: Call AI function with: generateTests(userCommand.filename, fileContent, relatedFiles)
+          break
+          
+        case 'explain tests':
+          responseBody += `📋 **Action**: Explaining test requirements\n`
+          responseBody += `📁 **Target file**: \`${userCommand.filename}\`\n\n`
+          responseBody += `I will analyze the file and explain what tests should be implemented.\n`
+          // TODO: Call AI function with: explainTests(userCommand.filename, fileContent, relatedFiles)
+          break
+          
+        case 'sec check':
+          responseBody += `🔒 **Action**: Security vulnerability analysis\n`
+          responseBody += `📁 **Target file**: \`${userCommand.filename}\`\n\n`
+          responseBody += `I will analyze the file for potential security vulnerabilities.\n`
+          // TODO: Call AI function with: securityCheck(userCommand.filename, fileContent, relatedFiles)
+          break
+      }
+      
+      responseBody += `\n*(This is a placeholder - AI functionality will be implemented next)*`
+      
+      // Reply using your octokit module
+      await octokit.rest.issues.createComment({
+        owner: github_context.repo.owner,
+        repo: github_context.repo.repo,
+        issue_number: github_context.issue.number,
+        body: responseBody
+      })
+      
+      if (options.debug) {
+        info(`Processed user command: ${userCommand.action} for file: ${userCommand.filename}`)
       }
     } else {
-      warning('Skipped: this action only works on push events or pull_request')
+      if (options.debug) {
+        info('Comment does not contain a valid command, ignoring')
+      }
     }
-  } catch (e: any) {
-    if (e instanceof Error) {
-      setFailed(`Failed to run: ${e.message}, backtrace: ${e.stack}`)
-    } else {
-      setFailed(`Failed to run: ${e}, backtrace: ${e.stack}`)
-    }
+  } else {
+    warning('Skipped: this action only works on push events or pull_request')
   }
+} catch (e: any) {
+  if (e instanceof Error) {
+    setFailed(`Failed to run: ${e.message}, backtrace: ${e.stack}`)
+  } else {
+    setFailed(`Failed to run: ${e}, backtrace: ${e.stack}`)
+  }
+}
 }
 
 process
