@@ -6,7 +6,6 @@ export class Inputs {
   shortSummary: string
   filename: string
   fileContent: string
-  fileDiff: string
   patches: string
   diff: string
   commentChain: string
@@ -20,7 +19,6 @@ export class Inputs {
     shortSummary = '',
     filename = '',
     fileContent = 'file contents cannot be provided',
-    fileDiff = 'file diff cannot be provided',
     patches = '',
     diff = 'no diff',
     commentChain = 'no other comments on this patch',
@@ -33,7 +31,6 @@ export class Inputs {
     this.shortSummary = shortSummary
     this.filename = filename
     this.fileContent = fileContent
-    this.fileDiff = fileDiff
     this.patches = patches
     this.diff = diff
     this.commentChain = commentChain
@@ -49,7 +46,6 @@ export class Inputs {
       this.shortSummary,
       this.filename,
       this.fileContent,
-      this.fileDiff,
       this.patches,
       this.diff,
       this.commentChain,
@@ -81,9 +77,6 @@ export class Inputs {
     }
     if (this.fileContent) {
       content = content.replace('$file_content', this.fileContent)
-    }
-    if (this.fileDiff) {
-      content = content.replace('$file_diff', this.fileDiff)
     }
     if (this.patches) {
       content = content.replace('$patches', this.patches)
