@@ -17,7 +17,7 @@ import {octokit} from './octokit'
 // ======= Utility Functions for Command Parsing =======
 
 interface UserCommand {
-  action: 'summarize tests' | 'generate tests' | 'generate tests all' | 'explain tests' | 'explain tests all' | 'sec check' | 'custom prompt' | 'custom prompt all'
+  action: 'summarize tests' | 'generate tests' | 'all generate tests' | 'explain tests' | 'all explain tests' | 'sec check' | 'custom prompt' | 'all custom prompt'
   filename?: string // Optionnel car certaines commandes (all) n'ont pas besoin de filename
   customPrompt?: string
 }
@@ -35,12 +35,12 @@ function parseUserCommand(commentBody: string): UserCommand | null {
   // Regex patterns pour chaque type de commande
   const patterns = {
     summarizeTests: /^summarize\s+tests(?:\s+(.+?))?(?:\s+--prompt\s+(.+))?$/i,
-    generateTestsAll: /^generate\s+tests\s+all(?:\s+--prompt\s+(.+))?$/i,
+    allGenerateTests: /^all\s+generate\s+tests(?:\s+--prompt\s+(.+))?$/i,
     generateTests: /^generate\s+tests\s+(.+?)(?:\s+--prompt\s+(.+))?$/i,
-    explainTestsAll: /^explain\s+tests\s+all(?:\s+--prompt\s+(.+))?$/i,
+    allExplainTests: /^all\s+explain\s+tests(?:\s+--prompt\s+(.+))?$/i,
     explainTests: /^explain\s+tests\s+(.+?)(?:\s+--prompt\s+(.+))?$/i,
     secCheck: /^sec\s+check\s+(.+?)(?:\s+--prompt\s+(.+))?$/i,
-    customPromptAll: /^custom\s+prompt\s+all\s+--prompt\s+(.+)$/i,
+    allCustomPrompt: /^all\s+custom\s+prompt\s+--prompt\s+(.+)$/i,
     customPrompt: /^custom\s+prompt\s+(.+?)\s+--prompt\s+(.+)$/i
   }
   
@@ -55,9 +55,9 @@ function parseUserCommand(commentBody: string): UserCommand | null {
     }
   }
   
-  if ((match = trimmedComment.match(patterns.generateTestsAll))) {
+  if ((match = trimmedComment.match(patterns.allGenerateTests))) {
     return {
-      action: 'generate tests all',
+      action: 'all generate tests',
       customPrompt: match[1]?.trim()
     }
   }
@@ -73,9 +73,9 @@ function parseUserCommand(commentBody: string): UserCommand | null {
     }
   }
   
-  if ((match = trimmedComment.match(patterns.explainTestsAll))) {
+  if ((match = trimmedComment.match(patterns.allExplainTests))) {
     return {
-      action: 'explain tests all',
+      action: 'all explain tests',
       customPrompt: match[1]?.trim()
     }
   }
@@ -102,9 +102,9 @@ function parseUserCommand(commentBody: string): UserCommand | null {
     }
   }
   
-  if ((match = trimmedComment.match(patterns.customPromptAll))) {
+  if ((match = trimmedComment.match(patterns.allCustomPrompt))) {
     return {
-      action: 'custom prompt all',
+      action: 'all custom prompt',
       customPrompt: match[1]?.trim()
     }
   }
@@ -273,16 +273,16 @@ async function handlePullRequestEvent(
     commentBody += `- \`sec check <filename>\` - Check for potential security vulnerabilities in a specific file\n`
     commentBody += `- \`custom prompt <filename> --prompt <your_instructions>\` - Custom analysis for a specific file\n\n`
     commentBody += `**All files commands:**\n`
-    commentBody += `- \`generate tests all\` - Generate tests for all modified files\n`
-    commentBody += `- \`explain tests all\` - Explain tests needed for all modified files\n`
-    commentBody += `- \`custom prompt all --prompt <your_instructions>\` - Custom analysis for all files\n\n`
+    commentBody += `- \`all generate tests\` - Generate tests for all modified files\n`
+    commentBody += `- \`all explain tests\` - Explain tests needed for all modified files\n`
+    commentBody += `- \`all custom prompt --prompt <your_instructions>\` - Custom analysis for all files\n\n`
     commentBody += `**Adding custom instructions:**\n`
     commentBody += `You can add \`--prompt <your_instructions>\` to any command for custom behavior.\n\n`
     commentBody += `**Examples:**\n`
     commentBody += `- \`generate tests src/utils/helper.ts\`\n`
     commentBody += `- \`generate tests src/api/auth.ts --prompt Focus on error handling and edge cases\`\n`
-    commentBody += `- \`generate tests all --prompt Use Jest and include integration tests\`\n`
-    commentBody += `- \`custom prompt all --prompt Generate performance tests for all files\`\n`
+    commentBody += `- \`all generate tests --prompt Use Jest and include integration tests\`\n`
+    commentBody += `- \`all custom prompt --prompt Generate performance tests for all files\`\n`
     
     // Post the comment using your octokit module
     await octokit.rest.issues.createComment({
@@ -381,7 +381,7 @@ async function handleCommentEvent(
         // TODO: Call AI function with: generateTests(userCommand.filename, fileContent, relatedFiles, userCommand.customPrompt)
         break
         
-      case 'generate tests all':
+      case 'all generate tests':
         responseBody += `🔧 **Action**: Generating tests for all modified files\n`
         if (userCommand.customPrompt) {
           responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
@@ -408,7 +408,7 @@ async function handleCommentEvent(
         // TODO: Call AI function with: explainTests(userCommand.filename, fileContent, relatedFiles, userCommand.customPrompt)
         break
         
-      case 'explain tests all':
+      case 'all explain tests':
         responseBody += `📋 **Action**: Explaining test requirements for all files\n`
         if (userCommand.customPrompt) {
           responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
@@ -447,7 +447,7 @@ async function handleCommentEvent(
         // TODO: Call AI function with: customPromptWithFiles(userCommand.filename, fileContent, relatedFiles, userCommand.customPrompt)
         break
         
-      case 'custom prompt all':
+      case 'all custom prompt':
         responseBody += `🎯 **Action**: Custom analysis for all files\n`
         responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n\n`
         responseBody += `I will analyze all modified files based on your specific requirements.\n`
