@@ -78,7 +78,28 @@ export class PromptBuilder {
    */
   private async getFileDiff(filename: string): Promise<string> {
     try {
-      const {data} = await octokit.rest.pulls.get({
+      const {data} = await octokit.rest.pulls.listFiles({
+        owner: github_context.repo.owner,
+        repo: github_context.repo.repo,
+        pull_number: github_context.issue.number,
+      })
+
+      // Extraire le diff pour le fichier spécifique
+      const fileData = data.find(file => file.filename === filename)
+      if (fileData && fileData.patch) {
+        return fileData.patch
+      }
+    } catch (error) {
+      console.warn(`Failed to fetch diff for ${filename}:`, error)
+      return ''
+    }
+    return ''
+  }
+
+  /**
+   * private async getFileDiff(filename: string): Promise<string> {
+    try {
+      const {data} = await octokit.rest.pulls.list({
         owner: github_context.repo.owner,
         repo: github_context.repo.repo,
         pull_number: github_context.issue.number,
@@ -98,6 +119,7 @@ export class PromptBuilder {
       return ''
     }
   }
+    **/
 
   /**
    * Collecte les fichiers liés et leur contenu
