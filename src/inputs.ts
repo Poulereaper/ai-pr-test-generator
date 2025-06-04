@@ -1,3 +1,22 @@
+export interface InputsConfig {
+  systemMessage?: string
+  title?: string
+  description?: string
+  rawSummary?: string
+  shortSummary?: string
+  filename?: string
+  file_content?: string
+  fileContent?: string
+  patches?: string
+  diff?: string
+  file_diff?: string
+  commentChain?: string
+  comment?: string
+  custom_prompt?: string
+  related_files_content?: string
+  existing_tests_content?: string
+}
+
 export class Inputs {
   systemMessage: string
   title: string
@@ -11,46 +30,50 @@ export class Inputs {
   commentChain: string
   comment: string
 
-  constructor(
-    systemMessage = '',
-    title = 'no title provided',
-    description = 'no description provided',
-    rawSummary = '',
-    shortSummary = '',
-    filename = '',
-    fileContent = 'file contents cannot be provided',
-    patches = '',
-    diff = 'no diff',
-    commentChain = 'no other comments on this patch',
-    comment = 'no comment provided'
-  ) {
-    this.systemMessage = systemMessage
-    this.title = title
-    this.description = description
-    this.rawSummary = rawSummary
-    this.shortSummary = shortSummary
-    this.filename = filename
-    this.fileContent = fileContent
-    this.patches = patches
-    this.diff = diff
-    this.commentChain = commentChain
-    this.comment = comment
+  constructor(config: InputsConfig | string = {}, ...legacyParams: any[]) {
+    // Support pour l'ancien format (paramètres individuels)
+    if (typeof config === 'string') {
+      this.systemMessage = config
+      this.title = legacyParams[0] || 'no title provided'
+      this.description = legacyParams[1] || 'no description provided'
+      this.rawSummary = legacyParams[2] || ''
+      this.shortSummary = legacyParams[3] || ''
+      this.filename = legacyParams[4] || ''
+      this.fileContent = legacyParams[5] || 'file contents cannot be provided'
+      this.patches = legacyParams[6] || ''
+      this.diff = legacyParams[7] || 'no diff'
+      this.commentChain = legacyParams[8] || 'no other comments on this patch'
+      this.comment = legacyParams[9] || 'no comment provided'
+    } else {
+      // Nouveau format (objet)
+      this.systemMessage = config.systemMessage || ''
+      this.title = config.title || 'no title provided'
+      this.description = config.description || 'no description provided'
+      this.rawSummary = config.rawSummary || ''
+      this.shortSummary = config.shortSummary || ''
+      this.filename = config.filename || ''
+      this.fileContent = config.fileContent || config.file_content || 'file contents cannot be provided'
+      this.patches = config.patches || ''
+      this.diff = config.diff || config.file_diff || 'no diff'
+      this.commentChain = config.commentChain || ''
+      this.comment = config.comment || config.custom_prompt || 'no comment provided'
+    }
   }
 
   clone(): Inputs {
-    return new Inputs(
-      this.systemMessage,
-      this.title,
-      this.description,
-      this.rawSummary,
-      this.shortSummary,
-      this.filename,
-      this.fileContent,
-      this.patches,
-      this.diff,
-      this.commentChain,
-      this.comment
-    )
+    return new Inputs({
+      systemMessage: this.systemMessage,
+      title: this.title,
+      description: this.description,
+      rawSummary: this.rawSummary,
+      shortSummary: this.shortSummary,
+      filename: this.filename,
+      fileContent: this.fileContent,
+      patches: this.patches,
+      diff: this.diff,
+      commentChain: this.commentChain,
+      comment: this.comment
+    })
   }
 
   render(content: string): string {

@@ -13,6 +13,7 @@ import {Options} from './options'
 import {Prompts} from './prompts'
 import {FilesInfo, FileData} from './related-files-finder'
 import {octokit} from './octokit'
+import {PromptBuilder, PromptContext} from './prompt-builder'
 
 // ======= Utility Functions for Command Parsing =======
 
@@ -346,134 +347,73 @@ async function handleCommentEvent(
       })
       return
     }
-    
-    // Prepare response based on user choice
-    let responseBody = `✅ **Command received**: \`${userCommand.action} ${userCommand.filename || ''}\`\n\n`
-    
-    switch (userCommand.action) {
-      case 'summarize tests':
-        responseBody += `📋 **Action**: Summarizing file diff for test generation\n`
-        if (userCommand.filename) {
-          responseBody += `📁 **Target file**: \`${userCommand.filename}\`\n`
-        }
-        if (userCommand.customPrompt) {
-          responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
-        }
-        responseBody += `\nI will analyze the file changes and summarize what needs to be tested.\n`
-        //Display the prompt that will be used if debug mod is enabled
-        if (options.debug) {
-          
-        }
-        // TODO: Call AI function with: summarizeFileDiffForTest(userCommand.filename, fileContent, relatedFiles, userCommand.customPrompt)
-        break
-        
-      case 'generate tests':
-        responseBody += `🔧 **Action**: Generating test implementations\n`
-        responseBody += `📁 **Target file**: \`${userCommand.filename}\`\n`
-        if (userCommand.customPrompt) {
-          responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
-        }
-        responseBody += `\nI will generate comprehensive test implementations for this file.\n`
-        //Display the prompt that will be used if debug mod is enabled
-        if (options.debug) {
-          
-        }
-        // TODO: Call AI function with: generateTests(userCommand.filename, fileContent, relatedFiles, userCommand.customPrompt)
-        break
-        
-      case 'all generate tests':
-        responseBody += `🔧 **Action**: Generating tests for all modified files\n`
-        if (userCommand.customPrompt) {
-          responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
-        }
-        responseBody += `\nI will generate comprehensive test implementations for all modified files.\n`
-        //Display the prompt that will be used if debug mod is enabled
-        if (options.debug) {
-          
-        }
-        // TODO: Call AI function with: generateAllTests(allFiles, userCommand.customPrompt)
-        break
-        
-      case 'explain tests':
-        responseBody += `📋 **Action**: Explaining test requirements\n`
-        responseBody += `📁 **Target file**: \`${userCommand.filename}\`\n`
-        if (userCommand.customPrompt) {
-          responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
-        }
-        responseBody += `\nI will analyze the file and explain what tests should be implemented.\n`
-        //Display the prompt that will be used if debug mod is enabled
-        if (options.debug) {
-          
-        }
-        // TODO: Call AI function with: explainTests(userCommand.filename, fileContent, relatedFiles, userCommand.customPrompt)
-        break
-        
-      case 'all explain tests':
-        responseBody += `📋 **Action**: Explaining test requirements for all files\n`
-        if (userCommand.customPrompt) {
-          responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
-        }
-        responseBody += `\nI will analyze all modified files and explain what tests should be implemented.\n`
-        //Display the prompt that will be used if debug mod is enabled
-        if (options.debug) {
-          
-        }
-        // TODO: Call AI function with: explainAllTests(allFiles, userCommand.customPrompt)
-        break
-        
-      case 'sec check':
-        responseBody += `🔒 **Action**: Security vulnerability analysis\n`
-        responseBody += `📁 **Target file**: \`${userCommand.filename}\`\n`
-        if (userCommand.customPrompt) {
-          responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
-        }
-        responseBody += `\nI will analyze the file for potential security vulnerabilities.\n`
-        //Display the prompt that will be used if debug mod is enabled
-        if (options.debug) {
-          
-        }
-        // TODO: Call AI function with: securityCheck(userCommand.filename, fileContent, relatedFiles, userCommand.customPrompt)
-        break
-        
-      case 'custom prompt':
-        responseBody += `🎯 **Action**: Custom analysis\n`
-        responseBody += `📁 **Target file**: \`${userCommand.filename}\`\n`
-        responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n\n`
-        responseBody += `I will analyze the file based on your specific requirements.\n`
-        //Display the prompt that will be used if debug mod is enabled
-        if (options.debug) {
-          
-        }
-        // TODO: Call AI function with: customPromptWithFiles(userCommand.filename, fileContent, relatedFiles, userCommand.customPrompt)
-        break
-        
-      case 'all custom prompt':
-        responseBody += `🎯 **Action**: Custom analysis for all files\n`
-        responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n\n`
-        responseBody += `I will analyze all modified files based on your specific requirements.\n`
-        //Display the prompt that will be used if debug mod is enabled
-        if (options.debug) {
-          
-        }
-        // TODO: Call AI function with: customPromptWithAll(allFiles, userCommand.customPrompt)
-        break
-    }
-    
-    responseBody += `\n*(This is a placeholder - AI functionality will be implemented next)*`
-    
-    // Reply using your octokit module
-    await octokit.rest.issues.createComment({
-      owner: github_context.repo.owner,
-      repo: github_context.repo.repo,
-      issue_number: github_context.issue.number,
-      body: responseBody
-    })
-    
-    if (options.debug) {
-      info(`Processed user command: ${userCommand.action} for file: ${userCommand.filename || 'all files'}`)
+
+    try {
+      // create a prompt builder instance
+      const promptBuilder = new PromptBuilder(prompts)
+      
+      // Context for the prompt
+      const promptContext: PromptContext = {
+        filename: userCommand.filename,
+        customPrompt: userCommand.customPrompt,
+        filesInfo,
+        filesDependencies
+      }
+      
+      // Generate the prompt context and target files
+      const promptResult = await promptBuilder.buildPrompt(userCommand.action, promptContext)
+      
+      if (options.debug) {
+        info(`Generated prompt context: ${promptResult.context}`)
+        info(`Target files: ${promptResult.targetFiles.join(', ')}`)
+        info(`Prompt preview: ${promptResult.prompt.substring(0, 200)}...`)
+      }
+      
+      // Prepare initial response body
+      let responseBody = `✅ **Command received**: \`${userCommand.action} ${userCommand.filename || ''}\`\n\n`
+      responseBody += `📋 **Context**: ${promptResult.context}\n`
+      responseBody += `📁 **Target files**: ${promptResult.targetFiles.map(f => `\`${f}\``).join(', ')}\n`
+      
+      if (userCommand.customPrompt) {
+        responseBody += `💭 **Custom instructions**: ${userCommand.customPrompt}\n`
+      }
+      
+      responseBody += `\n🤖 **Processing...** Please wait while I analyze the code and generate the response.\n`
+      
+      // Post initial answer to acknowledge the command
+      await octokit.rest.issues.createComment({
+        owner: github_context.repo.owner,
+        repo: github_context.repo.repo,
+        issue_number: github_context.issue.number,
+        body: responseBody
+      })
+      
+      // AI Call
+      
+      if (options.debug) {
+        info(`Successfully processed command: ${userCommand.action} for files: ${promptResult.targetFiles.join(', ')}`)
+        // Display the prompt for debugging
+        info(`Prompt: ${promptResult.prompt}`)
+      }
+      
+    } catch (error) {
+      console.error('Error processing user command:', error)
+      
+      const errorMessage = `❌ **Processing Error**: Failed to process your request.\n\n`
+        + `**Command**: \`${userCommand.action} ${userCommand.filename || ''}\`\n`
+        + `**Error**: ${error instanceof Error ? error.message : 'Unknown error'}\n\n`
+        + `Please try again or contact support if the issue persists.`
+      
+      await octokit.rest.issues.createComment({
+        owner: github_context.repo.owner,
+        repo: github_context.repo.repo,
+        issue_number: github_context.issue.number,
+        body: errorMessage
+      })
     }
   } else {
     if (options.debug) {
+      info(`Comment body: ${comment.body}`)
       info('Comment does not contain a valid command, ignoring')
     }
   }
