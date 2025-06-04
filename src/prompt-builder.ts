@@ -88,12 +88,14 @@ export class PromptBuilder {
       const fileData = data.find(file => file.filename === filename)
       if (fileData && fileData.patch) {
         return fileData.patch
+      } else {
+        console.warn(`No diff found for ${filename}`)
+        return 'AAA'
       }
     } catch (error) {
       console.warn(`Failed to fetch diff for ${filename}:`, error)
-      return ''
+      return 'PPP'
     }
-    return ''
   }
 
   /**
