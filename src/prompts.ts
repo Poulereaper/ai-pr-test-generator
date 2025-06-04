@@ -27,7 +27,9 @@ $description
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+\`\`\`
 $project_struct
+\`\`\`
 
 ### File: \`$filename\`
 
@@ -37,7 +39,9 @@ $file_diff
 \`\`\`
 
 ### Related Files Context
+\`\`\`
 $related_files_content
+\`\`\`
 
 ## Instructions
 
@@ -77,7 +81,9 @@ $description
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+\`\`\`
 $project_struct
+\`\`\`
 
 ### Target File: \`$filename\`
 
@@ -92,10 +98,14 @@ $file_content
 \`\`\`
 
 ### Related Files & Dependencies
+\`\`\`
 $related_files_content
+\`\`\`
 
 ### Existing Tests (if any)
+\`\`\`
 $existing_tests_content
+\`\`\`
 
 ## Instructions
 
@@ -156,7 +166,9 @@ $description
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+\`\`\`
 $project_struct
+\`\`\`
 
 ### Files Changes
 \`\`\`diff
@@ -169,10 +181,14 @@ $file_content
 \`\`\`
 
 ### Dependencies & Related Files
+\`\`\`
 $related_files_content
+\`\`\`
 
 ### Existing Test Coverage
+\`\`\`
 $existing_tests_content
+\`\`\`
 
 ## Instructions
 
@@ -241,7 +257,9 @@ $description
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+\`\`\`
 $project_struct
+\`\`\`
 
 ### Target File: \`$filename\`
 
@@ -256,10 +274,14 @@ $file_content
 \`\`\`
 
 ### Related Files & Dependencies
+\`\`\`
 $related_files_content
+\`\`\`
 
 ### Existing Tests (for reference)
+\`\`\`
 $existing_tests_content
+\`\`\`
 
 ### Project Test Framework Info
 $test_framework_info
@@ -327,7 +349,9 @@ $description
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+\`\`\`
 $project_struct
+\`\`\`
 
 ### Files Changes
 \`\`\`diff
@@ -340,10 +364,14 @@ $file_content
 \`\`\`
 
 ### Dependencies & Related Files
+\`\`\`
 $related_files_content
+\`\`\`
 
 ### Existing Test Structure
+\`\`\`
 $existing_tests_content
+\`\`\`
 
 ### Project Test Framework Info
 $test_framework_info
@@ -413,7 +441,9 @@ $description
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+\`\`\`
 $project_struct
+\`\`\`
 
 ### Target File: \`$filename\`
 
@@ -428,7 +458,9 @@ $file_content
 \`\`\`
 
 ### Related Files & Dependencies
+\`\`\`
 $related_files_content
+\`\`\`
 
 ## Instructions
 
@@ -492,7 +524,9 @@ $description
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+\`\`\`
 $project_struct
+\`\`\`
 
 ### Target File: \`$filename\`
 
@@ -507,10 +541,14 @@ $file_content
 \`\`\`
 
 ### Related Files & Dependencies
+\`\`\`
 $related_files_content
+\`\`\`
 
 ### Existing Tests (for context)
+\`\`\`
 $existing_tests_content
+\`\`\`
 
 ## Custom Instructions from User
 
@@ -551,7 +589,9 @@ $description
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+\`\`\`
 $project_struct
+\`\`\`
 
 ### All Modified Files and Content (Current State)
 \`\`\`
@@ -559,13 +599,18 @@ $file_content
 \`\`\`
 
 ### Dependencies & Related Files
+\`\`\`
 $related_files_content
+\`\`\`
 
 ### Existing Test Structure
+\`\`\`
 $existing_tests_content
+\`\`\`
 
 ### Project Context
 $project_context
+
 
 ## Custom Instructions from User
 

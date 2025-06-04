@@ -213,7 +213,7 @@ export class PromptBuilder {
   }
 
   /**
-   * Génère un prompt pour résumer les changements d'un fichier
+   * Create a prompt to summarize tests for a file
    */
   async buildSummarizeTestsPrompt(context: PromptContext): Promise<PromptResult> {
     if (!context.filename) {
@@ -231,7 +231,7 @@ export class PromptBuilder {
   }
 
   /**
-   * Génère un prompt pour générer des tests pour un fichier
+   * Create a prompt to generate tests for all files
    */
   async buildGenerateTestsPrompt(context: PromptContext): Promise<PromptResult> {
     if (!context.filename) {

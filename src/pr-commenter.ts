@@ -14,6 +14,7 @@ import {Prompts} from './prompts'
 import {FilesInfo, FileData} from './related-files-finder'
 import {octokit} from './octokit'
 import {PromptBuilder, PromptContext} from './prompt-builder'
+import {getTokenCount}from './tokenizer'
 //import { ProjectTreeAnalyzer } from './project-tree-analyer'
 
 // ======= Utility Functions for Command Parsing =======
@@ -361,6 +362,7 @@ async function handleCommentEvent(
         filesInfo,
         filesDependencies,
         ProjectStruct: 'No project structure available for the moment sry'
+        
       }
       
       // Generate the prompt context and target files
@@ -372,7 +374,7 @@ async function handleCommentEvent(
         info(`Prompt preview: ${promptResult.prompt.substring(0, 200)}...`)
       }
       
-      // Prepare initial response body
+      // Prepare initial response body -> Comment this part after to avoid spamming the user, or in debug mode only ?
       let responseBody = `✅ **Command received**: \`${userCommand.action} ${userCommand.filename || ''}\`\n\n`
       responseBody += `📋 **Context**: ${promptResult.context}\n`
       responseBody += `📁 **Target files**: ${promptResult.targetFiles.map(f => `\`${f}\``).join(', ')}\n`
@@ -390,7 +392,38 @@ async function handleCommentEvent(
         issue_number: github_context.issue.number,
         body: responseBody
       })
-      
+      // Tokenize the prompt to avoid exceeding limits
+      //getTokenCount(promptResult.prompt, options.aiapi)
+      const TokenPrompt = await getTokenCount(promptResult.prompt, options.aiapi)
+
+      if (options.debug) {
+        info(`Token count for prompt: ${TokenPrompt}`)
+      }
+
+      if (TokenPrompt > options.aimaxtokens) {
+        //Bot response to informe the user via comment
+        const errorMessage = `❌ **Error**: The generated prompt exceeds the maximum token limit of ${options.aimaxtokens} tokens.\n\n`
+        + `Please try simplifying your request or reducing the number of target files.\n\n`
+        + `**Command**: \`${userCommand.action} ${userCommand.filename || ''}\`\n`
+        + `**Token count**: ${TokenPrompt}\n`
+        + `**Max tokens allowed**: ${options.aimaxtokens}\n\n`
+        + `You can also try using a custom prompt with fewer files or simpler instructions.`
+        await octokit.rest.issues.createComment({
+          owner: github_context.repo.owner,
+          repo: github_context.repo.repo,
+          issue_number: github_context.issue.number,
+          body: errorMessage
+        })
+        if (options.debug) {
+          info(`Prompt exceeded max token limit: ${TokenPrompt} > ${options.aimaxtokens}`)
+        }
+        return
+      }else {
+        if (options.debug) {
+          info(`Prompt token count is within limits: ${TokenPrompt} <= ${options.aimaxtokens}`)
+        }
+      }
+
       // AI Call
       
       if (options.debug) {

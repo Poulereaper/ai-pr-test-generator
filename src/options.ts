@@ -17,6 +17,7 @@ export class Options {
   aiModelTemperature: number
   aiRetries: number
   aiTimeoutMS: number
+  aimaxtokens: number
   aiConcurrencyLimit: number
   githubConcurrencyLimit: number
   lightTokenLimits: TokenLimits
@@ -41,6 +42,7 @@ export class Options {
     aiModelTemperature = '0.0',
     aiRetries = '3',
     aiTimeoutMS = '120000',
+    aimaxtokens = '80000',
     aiConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
     apiBaseUrl = 'https://api.openai.com/v1',
@@ -62,6 +64,7 @@ export class Options {
     this.aiModelTemperature = parseFloat(aiModelTemperature)
     this.aiRetries = parseInt(aiRetries)
     this.aiTimeoutMS = parseInt(aiTimeoutMS)
+    this.aimaxtokens = parseInt(aimaxtokens)
     this.aiConcurrencyLimit = parseInt(aiConcurrencyLimit)
     this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit)
     this.lightTokenLimits = new TokenLimits(aiLightModel)
@@ -88,6 +91,7 @@ export class Options {
     info(`ai_model_temperature: ${this.aiModelTemperature}`)
     info(`ai_retries: ${this.aiRetries}`)
     info(`ai_timeout_ms: ${this.aiTimeoutMS}`)
+    info(`ai_max_tokens: ${this.aimaxtokens}`)
     info(`ai_concurrency_limit: ${this.aiConcurrencyLimit}`)
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
     info(`summary_token_limits: ${this.lightTokenLimits.string()}`)
