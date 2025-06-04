@@ -12,6 +12,7 @@ export interface PromptContext {
   filesDependencies: Map<string, FileData>
   prTitle?: string
   prDescription?: string
+  ProjectStruct?: string
 }
 
 export interface PromptResult {
@@ -99,31 +100,6 @@ export class PromptBuilder {
   }
 
   /**
-   * private async getFileDiff(filename: string): Promise<string> {
-    try {
-      const {data} = await octokit.rest.pulls.list({
-        owner: github_context.repo.owner,
-        repo: github_context.repo.repo,
-        pull_number: github_context.issue.number,
-        mediaType: {
-          format: 'diff'
-        }
-      })
-
-      // Extraire le diff pour le fichier spécifique
-      const fullDiff = data as unknown as string
-      const fileDiffRegex = new RegExp(`diff --git a/${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} b/${filename.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?(?=diff --git|$)`)
-      const match = fullDiff.match(fileDiffRegex)
-      
-      return match ? match[0] : ''
-    } catch (error) {
-      console.warn(`Failed to fetch diff for ${filename}:`, error)
-      return ''
-    }
-  }
-    **/
-
-  /**
    * Collecte les fichiers liés et leur contenu
    */
   private async getRelatedFilesContent(
@@ -195,7 +171,8 @@ export class PromptBuilder {
       file_diff: fileDiff,
       related_files_content: relatedFilesContent,
       existing_tests_content: existingTestsContent,
-      custom_prompt: context.customPrompt || ''
+      custom_prompt: context.customPrompt || '',
+      project_struct: context.ProjectStruct || ''
     })
   }
 
@@ -225,12 +202,13 @@ export class PromptBuilder {
     return new Inputs({
       title: context.prTitle || prInfo.title,
       description: context.prDescription || prInfo.description,
-      filename: 'all-files',
+      filename: 'all-files : ' + modifiedFiles.map(f => f.path).join(', '),
       file_content: allFileContents.join(''),
       file_diff: allFileDiffs.join(''),
       related_files_content: '',
       existing_tests_content: '',
-      custom_prompt: context.customPrompt || ''
+      custom_prompt: context.customPrompt || '',
+      project_struct: context.ProjectStruct || ''
     })
   }
 

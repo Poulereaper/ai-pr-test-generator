@@ -18,6 +18,7 @@ export interface InputsConfig {
   all_files_content?: string
   test_framework_info?: string
   project_context?: string
+  project_struct?: string
 }
 
 export class Inputs {
@@ -39,6 +40,7 @@ export class Inputs {
   all_files_content: string
   test_framework_info: string
   project_context: string
+  project_struct: string
 
   constructor(config: InputsConfig | string = {}, ...legacyParams: any[]) {
     if (typeof config === 'string') {
@@ -60,6 +62,7 @@ export class Inputs {
       this.all_files_content = legacyParams[13] || 'no files content provided'
       this.test_framework_info = legacyParams[14] || 'no test framework information provided'
       this.project_context = legacyParams[15] || 'no project context provided'
+      this.project_struct = legacyParams[16] || 'no project structure provided'
     } else {
       this.systemMessage = config.systemMessage || ''
       this.title = config.title || 'no title provided'
@@ -79,6 +82,7 @@ export class Inputs {
       this.all_files_content = config.all_files_content || 'no files content provided'
       this.test_framework_info = config.test_framework_info || 'no test framework information provided'
       this.project_context = config.project_context || 'no project context provided'
+      this.project_struct = config.project_struct || 'no project structure provided'
     }
   }
 
@@ -101,7 +105,8 @@ export class Inputs {
       existing_tests_content: this.existing_tests_content,
       all_files_content: this.all_files_content,
       test_framework_info: this.test_framework_info,
-      project_context: this.project_context
+      project_context: this.project_context,
+      project_struct: this.project_struct
     })
   }
 
@@ -129,7 +134,8 @@ export class Inputs {
       '$existing_tests_content': this.existing_tests_content,
       '$all_files_content': this.all_files_content,
       '$test_framework_info': this.test_framework_info,
-      '$project_context': this.project_context
+      '$project_context': this.project_context,
+      '$project_struct': this.project_struct
     }
 
     let result = content

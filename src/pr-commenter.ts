@@ -14,12 +14,13 @@ import {Prompts} from './prompts'
 import {FilesInfo, FileData} from './related-files-finder'
 import {octokit} from './octokit'
 import {PromptBuilder, PromptContext} from './prompt-builder'
+//import { ProjectTreeAnalyzer } from './project-tree-analyer'
 
 // ======= Utility Functions for Command Parsing =======
 
 interface UserCommand {
   action: 'summarize tests' | 'generate tests' | 'all generate tests' | 'explain tests' | 'all explain tests' | 'sec check' | 'custom prompt' | 'all custom prompt'
-  filename?: string // Optionnel car certaines commandes (all) n'ont pas besoin de filename
+  filename?: string
   customPrompt?: string
 }
 
@@ -319,6 +320,7 @@ async function handleCommentEvent(
   // Get the comment information from context
   const payload = github_context.payload
   const comment = payload.comment
+  //const analyzer = new ProjectTreeAnalyzer([options.pathFilters]);
   
   if (!comment) {
     warning('No comment found in payload')
@@ -357,7 +359,8 @@ async function handleCommentEvent(
         filename: userCommand.filename,
         customPrompt: userCommand.customPrompt,
         filesInfo,
-        filesDependencies
+        filesDependencies,
+        ProjectStruct: 'No project structure available for the moment sry'
       }
       
       // Generate the prompt context and target files
