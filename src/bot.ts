@@ -64,7 +64,11 @@ export function createBot(options: Options, modelOptions: any): Bot {
 They will need only one use case :
 Our bot leave a comment under a PR that need new tests -> Done in the main.ts
 Then the user is allowed to choose either to summarize what tests should be modified or created by highlining modifications, or generate tests for a choosen file. -> input will be collected in the main.ts = action + file 
-The bot will then juste need to get the pre prompt, the files and dependancies based on the user choice and the files modified in the PR.
+The bot will then juste need to get the pre prompt, the files and dependancies based on the user choice and the files modified in the PR :
+
+Input will be :
+- the pre prompt (system message) from the pr-commenter.ts
+- The class of the AI that is used (OpenAI, Mistral, Claude, Gemini) -> The option of the light or heavy model will be decided before so here we juste need to create the request and send the prompt to the API
 */
 
 // ========== OpenAI Bot ==========
@@ -79,7 +83,7 @@ export class BotOpenAI implements Bot {
     if (process.env.OPENAI_API_KEY) {
       const currentDate = new Date().toISOString().split('T')[0]
       const systemMessage = `${options.systemMessage} 
-Knowledge cutoff: ${openaiOptions.tokenLimits.knowledgeCutOff}
+Knowledge cutoff: 10
 Current date: ${currentDate}
 
 IMPORTANT: Entire response must be in the language with ISO code: ${options.language}
@@ -91,8 +95,8 @@ IMPORTANT: Entire response must be in the language with ISO code: ${options.lang
         apiKey: process.env.OPENAI_API_KEY,
         apiOrg: process.env.OPENAI_API_ORG ?? undefined,
         debug: options.debug,
-        maxModelTokens: openaiOptions.tokenLimits.maxTokens,
-        maxResponseTokens: openaiOptions.tokenLimits.responseTokens,
+        maxModelTokens: options.aimaxtokens,
+        maxResponseTokens: options.aimaxtokens*2,
         completionParams: {
           temperature: options.aiModelTemperature,
           model: openaiOptions.model

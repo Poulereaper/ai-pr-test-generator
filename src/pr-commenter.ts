@@ -369,9 +369,10 @@ async function handleCommentEvent(
       const promptResult = await promptBuilder.buildPrompt(userCommand.action, promptContext)
       
       if (options.debug) {
+        info(`\n\n----------------------------\n\nDebugging Info - Prompt Generation\n\n----------------------------\n\n`)
         info(`Generated prompt context: ${promptResult.context}`)
         info(`Target files: ${promptResult.targetFiles.join(', ')}`)
-        info(`Prompt preview: ${promptResult.prompt.substring(0, 200)}...`)
+        info(`Prompt preview: ${promptResult.prompt.substring(0, 800)}...`)
       }
       
       // Prepare initial response body -> Comment this part after to avoid spamming the user, or in debug mode only ?
@@ -397,40 +398,132 @@ async function handleCommentEvent(
       const TokenPrompt = await getTokenCount(promptResult.prompt, options.aiapi)
 
       if (options.debug) {
+        info(`\n\n----------------------------\n\nDebugging Info - Token Count\n\n----------------------------\n\n`)
         info(`Token count for prompt: ${TokenPrompt}`)
       }
 
-      if (TokenPrompt > options.aimaxtokens) {
+      // Determine which bot to use based on the action based on the token count
+
+      if(!options.aiLightModeluses && TokenPrompt > options.aimaxtokens) {
+
         //Bot response to informe the user via comment
+
         const errorMessage = `❌ **Error**: The generated prompt exceeds the maximum token limit of ${options.aimaxtokens} tokens.\n\n`
         + `Please try simplifying your request or reducing the number of target files.\n\n`
         + `**Command**: \`${userCommand.action} ${userCommand.filename || ''}\`\n`
         + `**Token count**: ${TokenPrompt}\n`
         + `**Max tokens allowed**: ${options.aimaxtokens}\n\n`
         + `You can also try using a custom prompt with fewer files or simpler instructions.`
+        + `Or use another model.`
         await octokit.rest.issues.createComment({
           owner: github_context.repo.owner,
           repo: github_context.repo.repo,
           issue_number: github_context.issue.number,
           body: errorMessage
         })
+
         if (options.debug) {
           info(`Prompt exceeded max token limit: ${TokenPrompt} > ${options.aimaxtokens}`)
         }
+
         return
-      }else {
+
+      }else if (!options.aiLightModeluses && TokenPrompt <= options.aimaxtokens) {
+
+        // Prompt is within the limits of the model, use it
+
         if (options.debug) {
-          info(`Prompt token count is within limits: ${TokenPrompt} <= ${options.aimaxtokens}`)
+          info(`\nPrompt token count is within limits: ${TokenPrompt} <= ${options.aimaxtokens}`)
+          // Estimate the cost of the request
+          const estimatedCost = ((TokenPrompt/1000) * options.pricePerToken).toFixed(6)
+          info(`Estimated cost for this request: $${estimatedCost}`)
+        }
+
+        // AI Call
+      
+        if (options.debug) {
+          info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n\n`)
+          info(`Calling AI bot with action: ${userCommand.action}`)
+        }
+
+      }else if (options.aiLightModeluses && TokenPrompt > options.lightmaxTokens) {
+
+        // Prompt is to large for the light model, use the heavy model
+
+        if (options.debug) {
+          info(`\nPrompt token count exceeds light model limit: ${TokenPrompt} > ${options.lightmaxTokens}`)
+          // Estimate the cost of the request
+          info(`The heavy model will be used for this request.`)
+        }
+
+      }else if (options.aiLightModeluses && TokenPrompt <= options.lightmaxTokens) {
+
+        // Prompt is within the limits of the light model, use it
+
+        if (options.debug) {
+          info(`\nPrompt token count is within limits of light model: ${TokenPrompt} <= ${options.lightmaxTokens}`)
+          // Estimate the cost of the request
+          const estimatedCost = ((TokenPrompt/1000) * options.pricePerToken).toFixed(6)
+          info(`Estimated cost for this request: $${estimatedCost}`)
+        }
+
+        // AI Call
+      
+        if (options.debug) {
+          info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n\n`)
+          info(`Calling AI bot with action: ${userCommand.action}`)
+        }
+
+      }else if (options.aiLightModeluses && TokenPrompt > options.heavymaxTokens) {
+
+        // Prompt is too large for the heavy model, inform the user
+
+        //Bot response to informe the user via comment
+        const errorMessage = `❌ **Error**: The generated prompt exceeds the maximum token limit of ${options.heavymaxTokens} tokens.\n\n`
+        + `Please try simplifying your request or reducing the number of target files.\n\n`
+        + `**Command**: \`${userCommand.action} ${userCommand.filename || ''}\`\n`
+        + `**Token count**: ${TokenPrompt}\n`
+        + `**Max tokens allowed**: ${options.heavymaxTokens}\n\n`
+        + `You can also try using a custom prompt with fewer files or simpler instructions.`
+        + `Or use another model.`
+        await octokit.rest.issues.createComment({
+          owner: github_context.repo.owner,
+          repo: github_context.repo.repo,
+          issue_number: github_context.issue.number,
+          body: errorMessage
+        })
+
+        if (options.debug) {
+          info(`Prompt exceeded max token limit for the heavy bot : ${TokenPrompt} > ${options.heavymaxTokens}`)
+        }
+
+        return
+
+      }else if (options.aiLightModeluses && TokenPrompt <= options.heavymaxTokens) {
+
+        // Prompt is within the limits of the heavy model, use it
+
+        if (options.debug) {
+          info(`\nPrompt token count is within limits of light model: ${TokenPrompt} <= ${options.heavymaxTokens}`)
+          // Estimate the cost of the request
+          const estimatedCost = ((TokenPrompt/1000) * options.pricePerToken).toFixed(6)
+          info(`Estimated cost for this request: $${estimatedCost}`)
+        }
+
+        // AI Call
+      
+        if (options.debug) {
+          info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n\n`)
+          info(`Calling AI bot with action: ${userCommand.action}`)
+        }
+
+      }else {
+        // This should never happen, but just in case
+        if (options.debug) {
+          info(`!! Unexpected token count: ${TokenPrompt} !!`)
         }
       }
 
-      // AI Call
-      
-      if (options.debug) {
-        info(`Successfully processed command: ${userCommand.action} for files: ${promptResult.targetFiles.join(', ')}`)
-        // Display the prompt for debugging
-        info(`Prompt: ${promptResult.prompt}`)
-      }
       
     } catch (error) {
       console.error('Error processing user command:', error)

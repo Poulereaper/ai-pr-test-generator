@@ -1,6 +1,5 @@
 import {info} from '@actions/core'
 import {minimatch} from 'minimatch'
-import {TokenLimits} from './limits'
 
 export class Options {
   debug: boolean
@@ -18,10 +17,13 @@ export class Options {
   aiRetries: number
   aiTimeoutMS: number
   aimaxtokens: number
+  lightmaxTokens: number
+  heavymaxTokens: number
+  pricePerToken: number
+  pricelightperToken: number
+  priceheavyperToken: number
   aiConcurrencyLimit: number
   githubConcurrencyLimit: number
-  lightTokenLimits: TokenLimits
-  heavyTokenLimits: TokenLimits
   apiBaseUrl: string
   diffList: string
   botName: string
@@ -43,6 +45,11 @@ export class Options {
     aiRetries = '3',
     aiTimeoutMS = '120000',
     aimaxtokens = '80000',
+    lightmaxTokens = '80000',
+    heavymaxTokens = '80000',
+    pricePerToken = '0.000001',
+    pricelightperToken = '0.000001',
+    priceheavyperToken = '0.000001',
     aiConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
     apiBaseUrl = 'https://api.openai.com/v1',
@@ -65,10 +72,13 @@ export class Options {
     this.aiRetries = parseInt(aiRetries)
     this.aiTimeoutMS = parseInt(aiTimeoutMS)
     this.aimaxtokens = parseInt(aimaxtokens)
+    this.lightmaxTokens = parseInt(lightmaxTokens)
+    this.heavymaxTokens = parseInt(heavymaxTokens)
+    this.pricePerToken = parseFloat(pricePerToken)
+    this.pricelightperToken = parseFloat(pricelightperToken)
+    this.priceheavyperToken = parseFloat(priceheavyperToken)
     this.aiConcurrencyLimit = parseInt(aiConcurrencyLimit)
     this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit)
-    this.lightTokenLimits = new TokenLimits(aiLightModel)
-    this.heavyTokenLimits = new TokenLimits(aiHeavyModel)
     this.apiBaseUrl = apiBaseUrl
     this.diffList = diffList
     this.botName = botName
@@ -92,10 +102,13 @@ export class Options {
     info(`ai_retries: ${this.aiRetries}`)
     info(`ai_timeout_ms: ${this.aiTimeoutMS}`)
     info(`ai_max_tokens: ${this.aimaxtokens}`)
+    info(`light_max_tokens: ${this.lightmaxTokens}`)
+    info(`heavy_max_tokens: ${this.heavymaxTokens}`)
+    info(`price_per_token: ${this.pricePerToken}`)
+    info(`price_per_token_light: ${this.pricelightperToken}`)
+    info(`price_per_token_heavy: ${this.priceheavyperToken}`)
     info(`ai_concurrency_limit: ${this.aiConcurrencyLimit}`)
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
-    info(`summary_token_limits: ${this.lightTokenLimits.string()}`)
-    info(`review_token_limits: ${this.heavyTokenLimits.string()}`)
     info(`ai_api_base_url: ${this.apiBaseUrl}`)
     info(`diff_list: ${this.diffList}`)
     info(`bot_name: ${this.botName}`)
@@ -156,56 +169,56 @@ export class PathFilter {
 
 export class OpenAIOptions {
   model: string
-  tokenLimits: TokenLimits
+  tokenLimits: number
 
-  constructor(model = 'gpt-3.5-turbo', tokenLimits: TokenLimits | null = null) {
+  constructor(model = 'gpt-3.5-turbo', tokenLimits: number | null = null) {
     this.model = model
     if (tokenLimits != null) {
       this.tokenLimits = tokenLimits
     } else {
-      this.tokenLimits = new TokenLimits(model)
+      this.tokenLimits = 80000 // Default token limit for gpt-3.5-turbo
     }
   }
 }
 
 export class ClaudeOptions {
   model: string
-  tokenLimits: TokenLimits
+  tokenLimits: number
 
-  constructor(model = 'claude-3', tokenLimits: TokenLimits | null = null) {
+  constructor(model = '', tokenLimits: number | null = null) {
     this.model = model
     if (tokenLimits != null) {
       this.tokenLimits = tokenLimits
     } else {
-      this.tokenLimits = new TokenLimits(model)
+      this.tokenLimits = 100000 // Default token limit for claude 3.5 Sonnet
     }
   }
 }
 
 export class MistralOptions {
   model: string
-  tokenLimits: TokenLimits
+  tokenLimits: number
 
-  constructor(model = 'mistral-large-latest', tokenLimits: TokenLimits | null = null) {
+  constructor(model = 'mistral-large-latest', tokenLimits: number | null = null) {
     this.model = model
     if (tokenLimits != null) {
       this.tokenLimits = tokenLimits
     } else {
-      this.tokenLimits = new TokenLimits(model)
+      this.tokenLimits = 80000 // Default token limit for mistral-large-latest
     }
   }
 }
 
 export class GeminiOptions {
   model: string
-  tokenLimits: TokenLimits
+  tokenLimits: number
 
-  constructor(model = 'gemini-1.5', tokenLimits: TokenLimits | null = null) {
+  constructor(model = '', tokenLimits: number | null = null) {
     this.model = model
     if (tokenLimits != null) {
       this.tokenLimits = tokenLimits
     } else {
-      this.tokenLimits = new TokenLimits(model)
+      this.tokenLimits = 150000 // Default token limit for gemini 2.5 Pro
     }
   }
 }

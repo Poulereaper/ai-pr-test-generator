@@ -35,6 +35,11 @@ async function run(): Promise<void> {
     getInput('ai_retries'),
     getInput('ai_timeout_ms'),
     getInput('ai_max_tokens'),
+    getInput('ai_max_tokens_light'),
+    getInput('ai_max_tokens_heavy'),
+    getInput('price_per_token'),
+    getInput('price_per_token_light'),
+    getInput('price_per_token_heavy'),
     getInput('ai_concurrency_limit'),
     getInput('github_concurrency_limit'),
     getInput('ai_api_base_url'),
@@ -79,16 +84,16 @@ async function run(): Promise<void> {
       let lightModelOptions;
       switch (options.aiapi) {
         case 'openai':
-          lightModelOptions = new OpenAIOptions(options.aiLightModel, options.lightTokenLimits);
+          lightModelOptions = new OpenAIOptions(options.aiLightModel, options.lightmaxTokens);
           break;
         case 'mistral':
-          lightModelOptions = new MistralOptions(options.aiLightModel, options.lightTokenLimits);
+          lightModelOptions = new MistralOptions(options.aiLightModel, options.lightmaxTokens);
           break;
         case 'claude':
-          lightModelOptions = new ClaudeOptions(options.aiLightModel, options.lightTokenLimits);
+          lightModelOptions = new ClaudeOptions(options.aiLightModel, options.lightmaxTokens);
           break;
         case 'gemini':
-          lightModelOptions = new GeminiOptions(options.aiLightModel, options.lightTokenLimits);
+          lightModelOptions = new GeminiOptions(options.aiLightModel, options.lightmaxTokens);
           break;
       }
       
@@ -105,16 +110,16 @@ async function run(): Promise<void> {
       let heavyModelOptions;
       switch (options.aiapi) {
         case 'openai':
-          heavyModelOptions = new OpenAIOptions(options.aiHeavyModel, options.heavyTokenLimits);
+          heavyModelOptions = new OpenAIOptions(options.aiHeavyModel, options.heavymaxTokens);
           break;
         case 'mistral':
-          heavyModelOptions = new MistralOptions(options.aiHeavyModel, options.heavyTokenLimits);
+          heavyModelOptions = new MistralOptions(options.aiHeavyModel, options.heavymaxTokens);
           break;
         case 'claude':
-          heavyModelOptions = new ClaudeOptions(options.aiHeavyModel, options.heavyTokenLimits);
+          heavyModelOptions = new ClaudeOptions(options.aiHeavyModel, options.heavymaxTokens);
           break;
         case 'gemini':
-          heavyModelOptions = new GeminiOptions(options.aiHeavyModel, options.heavyTokenLimits);
+          heavyModelOptions = new GeminiOptions(options.aiHeavyModel, options.heavymaxTokens);
           break;
       }
       
@@ -141,16 +146,16 @@ async function run(): Promise<void> {
       let modelOptions;
       switch (options.aiapi) {
         case 'openai':
-          modelOptions = new OpenAIOptions(options.aiHeavyModel, options.heavyTokenLimits);
+          modelOptions = new OpenAIOptions(options.aiHeavyModel, options.aimaxtokens);
           break;
         case 'mistral':
-          modelOptions = new MistralOptions(options.aiHeavyModel, options.heavyTokenLimits);
+          modelOptions = new MistralOptions(options.aiHeavyModel, options.aimaxtokens);
           break;
         case 'claude':
-          modelOptions = new ClaudeOptions(options.aiHeavyModel, options.heavyTokenLimits);
+          modelOptions = new ClaudeOptions(options.aiHeavyModel, options.aimaxtokens);
           break;
         case 'gemini':
-          modelOptions = new GeminiOptions(options.aiHeavyModel, options.heavyTokenLimits);
+          modelOptions = new GeminiOptions(options.aiHeavyModel, options.aimaxtokens);
           break;
       }
       
@@ -162,7 +167,6 @@ async function run(): Promise<void> {
       return
     }
   }
-
   info (`${options.botName} bot created successfully`)
 
   // ========== Files Analysis =======
@@ -188,6 +192,7 @@ async function run(): Promise<void> {
     testsToModify = filesInfo.getTestsToModify()
     
     if (options.debug) {
+      info(`\n\n----------------------------\n\nDebugging Info - Diff and Related Files\n\n----------------------------\n\n`)
       info(`Found ${filesDependencies.size} related files`)
       info(`Found ${testsToModify.length} test files that may need to be updated`)
       

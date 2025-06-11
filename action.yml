@@ -188,8 +188,28 @@ inputs:
     default: '360000'
   ai_max_tokens:
     required: false
-    description: 'Max tokens for AI API call'
+    description: 'Max tokens for AI API call - temp and will be replaced by light or heavy max tokens'
     default: '80000'
+  ai_max_tokens_light:
+    required: false
+    description: 'Max tokens for AI light model API call'
+    default: '10000'
+  ai_max_tokens_heavy:
+    required: false
+    description: 'Max tokens for AI heavy model API call'
+    default: '150000'
+  price_per_token:
+    required: false
+    description: 'Price per 1k tokens for AI API'
+    default: '0.00015'
+  price_per_token_light:
+    required: false
+    description: 'Price per 1k tokens for AI light model API'
+    default: '0.00015'
+  price_per_token_heavy:
+    required: false
+    description: 'Price per 1k tokens for AI heavy model API'
+    default: '0.00015'
   ai_concurrency_limit:
     required: false
     description: 'How many concurrent API calls to make to AI servers?'
