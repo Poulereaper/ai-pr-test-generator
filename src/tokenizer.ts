@@ -1,48 +1,63 @@
-// eslint-disable-next-line camelcase
-import {get_encoding} from '@dqbd/tiktoken'
+// Simple token estimator without WebAssembly dependencies
+// Uses character-based estimation that works well for GitHub Actions
 
-const tokenizer_OpenAI = get_encoding('cl100k_base')
+/**
+ * Estimate the number of tokens in a text input.
+ * Ratio is based on average characters per token.
+* Update in the future if the tokenizer Lib are eseasier to use.
+ */
+function estimateTokensFromText(input: string): number {
+  // Clean the input by removing the end-of-text token
+  const cleanInput = input.replace(/<\|endoftext\|>/g, '');
+  
+  // Estimate the number of tokens based on average characters per token
+  // Average is around 3.8 characters per token for English text
+  const avgCharsPerToken = 3.8;
+  
+  // Count the number of characters in the cleaned input
+  const charCount = cleanInput.length;
+  
+  return Math.ceil(charCount / avgCharsPerToken);
+}
+
+function createMockEncoding(input: string): Uint32Array {
+  const tokenCount = estimateTokensFromText(input);
+  return new Uint32Array(Array.from({length: tokenCount}, (_, i) => i + 1));
+}
 
 export function encode_OpenAI(input: string): Uint32Array {
-  return tokenizer_OpenAI.encode(input)
+  return createMockEncoding(input);
 }
 
 export function getTokenCount_OpenAI(input: string): number {
-  input = input.replace(/<\|endoftext\|>/g, '')
-  return encode_OpenAI(input).length
+  return estimateTokensFromText(input);
 }
 
 export function encode_Claude(input: string): Uint32Array {
-  // We use the OpenAI tokenizer for Claude as a temporary solution
-  return encode_OpenAI(input)
+  return createMockEncoding(input);
 }
 
 export function getTokenCount_Claude(input: string): number {
-  input = input.replace(/<\|endoftext\|>/g, '')
-  return encode_Claude(input).length
+  return estimateTokensFromText(input);
 }
 
 export function encode_Mistral(input: string): Uint32Array {
-  // We use the OpenAI tokenizer for Mistral as a temporary solution
-  return encode_OpenAI(input)
+  return createMockEncoding(input);
 }
 
 export function getTokenCount_Mistral(input: string): number {
-  input = input.replace(/<\|endoftext\|>/g, '')
-  return encode_Mistral(input).length
+  return estimateTokensFromText(input);
 }
 
 export function encode_Gemini(input: string): Uint32Array {
-  // We use the OpenAI tokenizer for Gemini as a temporary solution
-  return encode_OpenAI(input)
+  return createMockEncoding(input);
 }
 
 export function getTokenCount_Gemini(input: string): number {
-  input = input.replace(/<\|endoftext\|>/g, '')
-  return encode_Gemini(input).length
+  return estimateTokensFromText(input);
 }
 
-// Fonction utilitaire pour obtenir le nombre de tokens pour n'importe quel modèle
+// Main function to get token count based on model type
 export function getTokenCount(input: string, model: string): number {
   switch (model) {
     case 'openai':
