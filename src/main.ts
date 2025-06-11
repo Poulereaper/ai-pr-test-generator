@@ -34,6 +34,7 @@ async function run(): Promise<void> {
     getInput('ai_model_temperature'),
     getInput('ai_retries'),
     getInput('ai_timeout_ms'),
+    getInput('ai_max_tokens'),
     getInput('ai_concurrency_limit'),
     getInput('github_concurrency_limit'),
     getInput('ai_api_base_url'),
