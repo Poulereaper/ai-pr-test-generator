@@ -157,18 +157,14 @@ export class BotMistral implements Bot {
     const systemMessage = `${this.options.systemMessage}
 IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}`
 
-    const messages = [
-      { role: 'system', content: systemMessage },
-      { role: 'user', content: prompt }
-    ]
 
     try {
       const response = await pRetry(
         async () => {
           return await this.client!.chat({
             model: this.mistralOptions.model,
-            messages: messages,
-            temperature: this.options.aiModelTemperature,
+            messages: [{role: 'user', content: prompt }],
+            //temperature: this.options.aiModelTemperature
             //max_tokens: this.mistralOptions.tokenLimits*2,
           })
         },
