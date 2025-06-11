@@ -446,14 +446,16 @@ async function handleCommentEvent(
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n`)
           info(`Calling AI bot with action: ${userCommand.action}`)
+        }
 
         const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
         }
-        }
         // Post the AI response as a comment
+
+        postAIResponse(aiResponse ?? '', options, filesInfo, filesDependencies)
 
 
       }else if (options.aiLightModeluses && TokenPrompt <= options.lightmaxTokens) {
@@ -483,6 +485,8 @@ async function handleCommentEvent(
         }
 
         // Post the AI response as a comment
+
+        postAIResponse(aiResponse ?? '', options, filesInfo, filesDependencies)
 
       }else if (options.aiLightModeluses && TokenPrompt > options.heavymaxTokens) {
 
@@ -542,6 +546,8 @@ async function handleCommentEvent(
           info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
         }
         // Post the AI response as a comment
+
+        postAIResponse(aiResponse ?? '', options, filesInfo, filesDependencies)
         
       }else {
         // This should never happen, but just in case
@@ -573,6 +579,7 @@ async function handleCommentEvent(
     }
   }
 }
+
 
 /**
  * Main function to handle PR Analysis
@@ -608,4 +615,32 @@ export async function handlePRAnalysis(
       setFailed(`Failed to run PR Analysis: ${e}, backtrace: ${e.stack}`)
     }
   }
+}
+
+//Simple Function to post the AI response as a comment
+export async function postAIResponse(
+  response: string,
+  options: Options,
+  filesInfo: FilesInfo | null,
+  filesDependencies: Map<string, FileData>
+): Promise<void> {
+  if (!response) {
+    warning('No response to post')
+    return
+  }
+  
+  // Prepare the comment body
+  let commentBody = `🤖 **AI Response**:\n\n`
+  commentBody += response
+  
+  // Add available files message
+  commentBody += `\n\n${getAvailableFilesMessage(filesInfo, filesDependencies)}`
+  
+  // Post the comment using your octokit module
+  await octokit.rest.issues.createComment({
+    owner: github_context.repo.owner,
+    repo: github_context.repo.repo,
+    issue_number: github_context.issue.number,
+    body: commentBody
+  })
 }
