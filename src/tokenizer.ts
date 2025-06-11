@@ -4,7 +4,7 @@
 /**
  * Estimate the number of tokens in a text input.
  * Ratio is based on average characters per token.
-* Update in the future if the tokenizer Lib are eseasier to use.
+* Update in the future if the tokenizer Lib are easier to use.
  */
 function estimateTokensFromText(input: string): number {
   // Clean the input by removing the end-of-text token
@@ -12,7 +12,7 @@ function estimateTokensFromText(input: string): number {
   
   // Estimate the number of tokens based on average characters per token
   // Average is around 3.8 characters per token for English text
-  const avgCharsPerToken = 3.1;
+  const avgCharsPerToken = 3.8;
   
   // Count the number of characters in the cleaned input
   const charCount = cleanInput.length;

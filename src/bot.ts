@@ -15,30 +15,25 @@ import pRetry from 'p-retry'
 import {OpenAIOptions} from './options'
 
 // import for Mistral API
-//import {Mistral} from '@mistralai/mistralai'
 import Mistral from '@mistralai/mistralai';
 import {MistralOptions} from './options'
 
 // import for Claude API
+import {ClaudeOptions} from './options'
 
 // import for Gemini API
+import {GeminiOptions} from './options'
 
-// ========== Messages Patterns ==========
-
-// define type to save parentMessageId and conversationId
-export interface Ids {
-  parentMessageId?: string
-  conversationId?: string
-}
-
-// ========== Bot Class ==========
-// This class is used to store the bot and the options, it contains :
-// - the bot object -> Depending on the bot type (OpenAI, Claude, Mistral, Gemini)
-// - the options object
-// - the bot type (OpenAI, Claude, Mistral, Gemini)
+// ========== Bot Interface ==========
 
 export interface Bot {
-  chat(message: string, ids: Ids): Promise<[string, Ids]>;
+  /**
+   * Send a single prompt to the AI and get a response
+   * This is the main method used for PR analysis and test generation
+   * @param prompt The complete prompt to send to the AI
+   * @returns Promise<string> The AI response
+   */
+  sendPrompt(prompt: string): Promise<string>;
 }
 
 // Factory method to create the appropriate bot based on options
@@ -49,41 +44,26 @@ export function createBot(options: Options, modelOptions: any): Bot {
     case 'mistral':
       return new BotMistral(options, modelOptions as MistralOptions);
     case 'claude':
-      // To be implemented later
-      throw new Error('Claude bot is not implemented yet');
+      return new BotClaude(options, modelOptions as ClaudeOptions);
     case 'gemini':
-      // To be implemented later
-      throw new Error('Gemini bot is not implemented yet');
+      return new BotGemini(options, modelOptions as GeminiOptions);
     default:
       throw new Error(`Unknown bot type: ${options.aiapi}`);
   }
 }
 
-// Indications about the bots --> Need to be updated
-/** 
-They will need only one use case :
-Our bot leave a comment under a PR that need new tests -> Done in the main.ts
-Then the user is allowed to choose either to summarize what tests should be modified or created by highlining modifications, or generate tests for a choosen file. -> input will be collected in the main.ts = action + file 
-The bot will then juste need to get the pre prompt, the files and dependancies based on the user choice and the files modified in the PR :
-
-Input will be :
-- the pre prompt (system message) from the pr-commenter.ts
-- The class of the AI that is used (OpenAI, Mistral, Claude, Gemini) -> The option of the light or heavy model will be decided before so here we juste need to create the request and send the prompt to the API
-*/
-
 // ========== OpenAI Bot ==========
 
 export class BotOpenAI implements Bot {
-  private readonly api: ChatGPTAPI | null = null // not free
-
+  private readonly api: ChatGPTAPI | null = null
   private readonly options: Options
 
   constructor(options: Options, openaiOptions: OpenAIOptions) {
     this.options = options
     if (process.env.OPENAI_API_KEY) {
       const currentDate = new Date().toISOString().split('T')[0]
-      const systemMessage = `${options.systemMessage} 
-Knowledge cutoff: 10
+      const systemMessage = `${options.systemMessage}
+Knowledge cutoff: 2024
 Current date: ${currentDate}
 
 IMPORTANT: Entire response must be in the language with ISO code: ${options.language}
@@ -95,98 +75,58 @@ IMPORTANT: Entire response must be in the language with ISO code: ${options.lang
         apiKey: process.env.OPENAI_API_KEY,
         apiOrg: process.env.OPENAI_API_ORG ?? undefined,
         debug: options.debug,
-        maxModelTokens: options.aimaxtokens,
-        maxResponseTokens: options.aimaxtokens*2,
+        maxResponseTokens: openaiOptions.tokenLimits*2,
         completionParams: {
           temperature: options.aiModelTemperature,
           model: openaiOptions.model
         }
       })
     } else {
-      const err =
-        "Unable to initialize the OpenAI API, both 'OPENAI_API_KEY' environment variable are not available"
+      const err = "Unable to initialize the OpenAI API, 'OPENAI_API_KEY' environment variable is not available"
       throw new Error(err)
     }
   }
 
-  chat = async (message: string, ids: Ids): Promise<[string, Ids]> => {
-    let res: [string, Ids] = ['', {}]
-    try {
-      res = await this.chat_(message, ids)
-      return res
-    } catch (e: unknown) {
-      if (e instanceof ChatGPTError) {
-        warning(`Failed to chat: ${e}, backtrace: ${e.stack}`)
-      }
-      return res
-    }
-  }
-
-  private readonly chat_ = async (
-    message: string,
-    ids: Ids
-  ): Promise<[string, Ids]> => {
-    // record timing
+  async sendPrompt(prompt: string): Promise<string> {
     const start = Date.now()
-    if (!message) {
-      return ['', {}]
+    
+    if (!prompt || !this.api) {
+      throw new Error('Invalid prompt or API not initialized')
     }
 
-    let response: ChatMessage | undefined
-
-    if (this.api != null) {
+    try {
       const opts: SendMessageOptions = {
         timeoutMs: this.options.aiTimeoutMS
       }
-      if (ids.parentMessageId) {
-        opts.parentMessageId = ids.parentMessageId
-      }
-      try {
-        response = await pRetry(() => this.api!.sendMessage(message, opts), {
-          retries: this.options.aiRetries
-        })
-      } catch (e: unknown) {
-        if (e instanceof ChatGPTError) {
-          info(
-            `response: ${response}, failed to send message to openai: ${e}, backtrace: ${e.stack}`
-          )
-        }
-      }
-      const end = Date.now()
-      info(`response: ${JSON.stringify(response)}`)
-      info(
-        `openai sendMessage (including retries) response time: ${
-          end - start
-        } ms`
+
+      const response = await pRetry(
+        () => this.api!.sendMessage(prompt, opts),
+        { retries: this.options.aiRetries }
       )
-    } else {
-      setFailed('The OpenAI API is not initialized')
+
+      const end = Date.now()
+      
+      if (this.options.debug) {
+        info(`OpenAI response time: ${end - start} ms`)
+        info(`OpenAI response: ${response.text.substring(0, 500)}...`)
+      }
+
+      let responseText = response.text
+      // Clean up response formatting
+      if (responseText.startsWith('with ')) {
+        responseText = responseText.substring(5)
+      }
+
+      return responseText
+
+    } catch (e: unknown) {
+      if (e instanceof ChatGPTError) {
+        warning(`Failed to send prompt to OpenAI: ${e.message}`)
+        throw new Error(`OpenAI API error: ${e.message}`)
+      }
+      throw e
     }
-    let responseText = ''
-    if (response != null) {
-      responseText = response.text
-    } else {
-      warning('openai response is null')
-    }
-    // remove the prefix "with " in the response
-    if (responseText.startsWith('with ')) {
-      responseText = responseText.substring(5)
-    }
-    if (this.options.debug) {
-      info(`openai responses: ${responseText}`)
-    }
-    const newIds: Ids = {
-      parentMessageId: response?.id,
-      conversationId: response?.conversationId
-    }
-    return [responseText, newIds]
   }
-}
-
-// ========== Claude Bot ==========
-
-export class BotClaude {
-  // To be implemented later
 }
 
 // ========== Mistral Bot ==========
@@ -195,61 +135,32 @@ export class BotMistral implements Bot {
   private readonly client: Mistral | null = null
   private readonly options: Options
   private readonly mistralOptions: MistralOptions
-  private readonly conversationHistory: Map<string, Array<{role: string, content: string}>> = new Map()
 
-  // For the Mistral client constructor
-constructor(options: Options, mistralOptions: MistralOptions) {
-  this.options = options
-  this.mistralOptions = mistralOptions
-  
-  if (process.env.MISTRAL_API_KEY) {
-    // Fix: Initialize Mistral client with apiKey parameter
-    this.client = new Mistral(process.env.MISTRAL_API_KEY as string)
-  } else {
-    throw new Error("Unable to initialize the Mistral API, 'MISTRAL_API_KEY' environment variable is not available")
-  }
-}
-
-  chat = async (message: string, ids: Ids): Promise<[string, Ids]> => {
-    try {
-      return await this.chat_(message, ids)
-    } catch (e: unknown) {
-      warning(`Failed to chat with Mistral: ${e}, backtrace: ${(e as Error).stack}`)
-      return ['', {}]
+  constructor(options: Options, mistralOptions: MistralOptions) {
+    this.options = options
+    this.mistralOptions = mistralOptions
+    
+    if (process.env.MISTRAL_API_KEY) {
+      this.client = new Mistral(process.env.MISTRAL_API_KEY as string)
+    } else {
+      throw new Error("Unable to initialize the Mistral API, 'MISTRAL_API_KEY' environment variable is not available")
     }
   }
 
-  private readonly chat_ = async (
-    message: string,
-    ids: Ids
-  ): Promise<[string, Ids]> => {
+  async sendPrompt(prompt: string): Promise<string> {
     const start = Date.now()
     
-    if (!message) {
-      return ['', {}]
+    if (!prompt || !this.client) {
+      throw new Error('Invalid prompt or API not initialized')
     }
 
-    if (this.client === null) {
-      setFailed('The Mistral API is not initialized')
-      return ['', {}]
-    }
+    const systemMessage = `${this.options.systemMessage}
+IMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}`
 
-    // Create or retrieve conversation history
-    const conversationId = ids.conversationId || `conv_${Date.now()}`
-    if (!this.conversationHistory.has(conversationId)) {
-      // Initialize with system message if it's a new conversation
-      const systemMessages = [{
-        role: 'system',
-        content: `${this.options.systemMessage}\nIMPORTANT: Entire response must be in the language with ISO code: ${this.options.language}`
-      }]
-      this.conversationHistory.set(conversationId, systemMessages)
-    }
-
-    // Get current conversation
-    const messages = this.conversationHistory.get(conversationId)!
-
-    // Add user message to history
-    messages.push({ role: 'user', content: message })
+    const messages = [
+      { role: 'system', content: systemMessage },
+      { role: 'user', content: prompt }
+    ]
 
     try {
       const response = await pRetry(
@@ -258,51 +169,75 @@ constructor(options: Options, mistralOptions: MistralOptions) {
             model: this.mistralOptions.model,
             messages: messages,
             temperature: this.options.aiModelTemperature,
-            // Add any other parameters you need here
-            //max_tokens: this.mistralOptions.tokenLimits.responseTokens,
+            //max_tokens: this.mistralOptions.tokenLimits*2,
           })
         },
-        {
-          retries: this.options.aiRetries
-        }
+        { retries: this.options.aiRetries }
       )
 
       const end = Date.now()
       const responseData = response.choices[0].message
       
-      // Add assistant response to history
-      messages.push({ 
-        role: responseData.role, 
-        content: responseData.content 
-      })
-      
       if (this.options.debug) {
-        info(`Mistral response: ${JSON.stringify(response)}`)
         info(`Mistral response time: ${end - start} ms`)
+        info(`Mistral response: ${responseData.content.substring(0, 500)}...`)
       }
       
-      const newIds: Ids = {
-        conversationId,
-        // Use the index in history as a parentMessageId equivalent
-        parentMessageId: `${messages.length - 1}`
-      }
-
       let responseText = responseData.content
-      // Apply the same formatting as OpenAI bot for consistency
+      // Clean up response formatting
       if (responseText.startsWith('with ')) {
         responseText = responseText.substring(5)
       }
 
-      return [responseText, newIds]
+      return responseText
+
     } catch (e) {
-      info(`Failed to send message to Mistral: ${e}, backtrace: ${(e as Error).stack}`)
-      return ['', { conversationId }]
+      warning(`Failed to send prompt to Mistral: ${(e as Error).message}`)
+      throw new Error(`Mistral API error: ${(e as Error).message}`)
     }
+  }
+}
+
+// ========== Claude Bot ==========
+
+export class BotClaude implements Bot {
+  private readonly options: Options
+  private readonly claudeOptions: ClaudeOptions
+
+  constructor(options: Options, claudeOptions: ClaudeOptions) {
+    this.options = options
+    this.claudeOptions = claudeOptions
+    
+    if (!process.env.CLAUDE_API_KEY) {
+      throw new Error("Unable to initialize the Claude API, 'CLAUDE_API_KEY' environment variable is not available")
+    }
+  }
+
+  async sendPrompt(prompt: string): Promise<string> {
+    // TODO: Implement Claude API integration
+    // This is a placeholder implementation
+    throw new Error('Claude bot is not implemented yet. Please use OpenAI or Mistral for now.')
   }
 }
 
 // ========== Gemini Bot ==========
 
-export class BotGemini {
-  // To be implemented later
+export class BotGemini implements Bot {
+  private readonly options: Options
+  private readonly geminiOptions: GeminiOptions
+
+  constructor(options: Options, geminiOptions: GeminiOptions) {
+    this.options = options
+    this.geminiOptions = geminiOptions
+    
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error("Unable to initialize the Gemini API, 'GEMINI_API_KEY' environment variable is not available")
+    }
+  }
+
+  async sendPrompt(prompt: string): Promise<string> {
+    // TODO: Implement Gemini API integration
+    // This is a placeholder implementation
+    throw new Error('Gemini bot is not implemented yet. Please use OpenAI or Mistral for now.')
+  }
 }

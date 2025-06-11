@@ -446,17 +446,15 @@ async function handleCommentEvent(
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n`)
           info(`Calling AI bot with action: ${userCommand.action}`)
-        }
 
-      }else if (options.aiLightModeluses && TokenPrompt > options.lightmaxTokens) {
-
-        // Prompt is to large for the light model, use the heavy model
-
+        const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
         if (options.debug) {
-          info(`\nPrompt token count exceeds light model limit: ${TokenPrompt} > ${options.lightmaxTokens}`)
-          // Estimate the cost of the request
-          info(`The heavy model will be used for this request.`)
+          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
+          info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
         }
+        }
+        // Post the AI response as a comment
+
 
       }else if (options.aiLightModeluses && TokenPrompt <= options.lightmaxTokens) {
 
@@ -477,6 +475,14 @@ async function handleCommentEvent(
           info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n`)
           info(`Calling AI bot with action: ${userCommand.action}`)
         }
+
+        const aiResponse = await lightBot?.sendPrompt(promptResult.prompt)
+        if (options.debug) {
+          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
+          info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
+        }
+
+        // Post the AI response as a comment
 
       }else if (options.aiLightModeluses && TokenPrompt > options.heavymaxTokens) {
 
@@ -503,7 +509,14 @@ async function handleCommentEvent(
 
         return
 
-      }else if (options.aiLightModeluses && TokenPrompt <= options.heavymaxTokens) {
+      }else if ((options.aiLightModeluses && TokenPrompt <= options.heavymaxTokens) || (options.aiLightModeluses && TokenPrompt > options.lightmaxTokens)) {
+
+        if (TokenPrompt > options.lightmaxTokens && options.debug) {
+          // Prompt is to large for the light model, use the heavy model
+          info(`\nPrompt token count exceeds light model limit: ${TokenPrompt} > ${options.lightmaxTokens}`)
+          // Estimate the cost of the request
+          info(`The heavy model will be used for this request.`)
+        }
 
         // Prompt is within the limits of the heavy model, use it
 
@@ -523,6 +536,13 @@ async function handleCommentEvent(
           info(`Calling AI bot with action: ${userCommand.action}`)
         }
 
+        const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
+        if (options.debug) {
+          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
+          info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
+        }
+        // Post the AI response as a comment
+        
       }else {
         // This should never happen, but just in case
         if (options.debug) {
