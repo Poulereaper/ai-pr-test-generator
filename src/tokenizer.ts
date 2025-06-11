@@ -12,7 +12,7 @@ function estimateTokensFromText(input: string): number {
   
   // Estimate the number of tokens based on average characters per token
   // Average is around 3.8 characters per token for English text
-  const avgCharsPerToken = 3.8;
+  const avgCharsPerToken = 3.1;
   
   // Count the number of characters in the cleaned input
   const charCount = cleanInput.length;

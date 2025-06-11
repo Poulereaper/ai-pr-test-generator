@@ -369,10 +369,10 @@ async function handleCommentEvent(
       const promptResult = await promptBuilder.buildPrompt(userCommand.action, promptContext)
       
       if (options.debug) {
-        info(`\n\n----------------------------\n\nDebugging Info - Prompt Generation\n\n----------------------------\n\n`)
+        info(`\n\n----------------------------\n\nDebugging Info - Prompt Generation\n\n----------------------------\n`)
         info(`Generated prompt context: ${promptResult.context}`)
         info(`Target files: ${promptResult.targetFiles.join(', ')}`)
-        info(`Prompt preview: ${promptResult.prompt.substring(0, 800)}...`)
+        info(`Prompt preview: ${promptResult.prompt.substring(0, 4000)}...`)
       }
       
       // Prepare initial response body -> Comment this part after to avoid spamming the user, or in debug mode only ?
@@ -398,7 +398,7 @@ async function handleCommentEvent(
       const TokenPrompt = await getTokenCount(promptResult.prompt, options.aiapi)
 
       if (options.debug) {
-        info(`\n\n----------------------------\n\nDebugging Info - Token Count\n\n----------------------------\n\n`)
+        info(`\n\n----------------------------\n\nDebugging Info - Token Count\n\n----------------------------\n`)
         info(`Token count for prompt: ${TokenPrompt}`)
       }
 
@@ -437,12 +437,14 @@ async function handleCommentEvent(
           // Estimate the cost of the request
           const estimatedCost = ((TokenPrompt/1000) * options.pricePerToken).toFixed(6)
           info(`Estimated cost for this request: $${estimatedCost}`)
+          const estimatedCostOut = ((TokenPrompt/1000) * options.priceperTokenout * 2).toFixed(6)
+          info(`Estimated maximum cost for output: $${estimatedCostOut}`)
         }
 
         // AI Call
       
         if (options.debug) {
-          info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n\n`)
+          info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n`)
           info(`Calling AI bot with action: ${userCommand.action}`)
         }
 
@@ -465,12 +467,14 @@ async function handleCommentEvent(
           // Estimate the cost of the request
           const estimatedCost = ((TokenPrompt/1000) * options.pricePerToken).toFixed(6)
           info(`Estimated cost for this request: $${estimatedCost}`)
+          const estimatedCostOut = ((TokenPrompt/1000) * options.pricelightperTokenout * 2).toFixed(6)
+          info(`Estimated maximum cost for output: $${estimatedCostOut}`)
         }
 
         // AI Call
       
         if (options.debug) {
-          info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n\n`)
+          info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n`)
           info(`Calling AI bot with action: ${userCommand.action}`)
         }
 
@@ -508,6 +512,8 @@ async function handleCommentEvent(
           // Estimate the cost of the request
           const estimatedCost = ((TokenPrompt/1000) * options.pricePerToken).toFixed(6)
           info(`Estimated cost for this request: $${estimatedCost}`)
+          const estimatedCostOut = ((TokenPrompt/1000) * options.priceheavyperTokenout * 2).toFixed(6)
+          info(`Estimated maximum cost for output: $${estimatedCostOut}`)
         }
 
         // AI Call

@@ -20,8 +20,11 @@ export class Options {
   lightmaxTokens: number
   heavymaxTokens: number
   pricePerToken: number
+  priceperTokenout : number
   pricelightperToken: number
+  pricelightperTokenout: number
   priceheavyperToken: number
+  priceheavyperTokenout: number
   aiConcurrencyLimit: number
   githubConcurrencyLimit: number
   apiBaseUrl: string
@@ -47,9 +50,12 @@ export class Options {
     aimaxtokens = '80000',
     lightmaxTokens = '80000',
     heavymaxTokens = '80000',
-    pricePerToken = '0.000001',
-    pricelightperToken = '0.000001',
-    priceheavyperToken = '0.000001',
+    pricePerToken = '0.002',
+    priceperTokenout = '0.010',
+    pricelightperToken = '0.001',
+    pricelightperTokenout = '0.004',
+    priceheavyperToken = '0.005',
+    priceheavyperTokenout = '0.016',
     aiConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
     apiBaseUrl = 'https://api.openai.com/v1',
@@ -75,8 +81,11 @@ export class Options {
     this.lightmaxTokens = parseInt(lightmaxTokens)
     this.heavymaxTokens = parseInt(heavymaxTokens)
     this.pricePerToken = parseFloat(pricePerToken)
+    this.priceperTokenout = parseFloat(priceperTokenout)
     this.pricelightperToken = parseFloat(pricelightperToken)
+    this.pricelightperTokenout = parseFloat(pricelightperTokenout)
     this.priceheavyperToken = parseFloat(priceheavyperToken)
+    this.priceheavyperTokenout = parseFloat(priceheavyperTokenout)
     this.aiConcurrencyLimit = parseInt(aiConcurrencyLimit)
     this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit)
     this.apiBaseUrl = apiBaseUrl
@@ -105,8 +114,11 @@ export class Options {
     info(`light_max_tokens: ${this.lightmaxTokens}`)
     info(`heavy_max_tokens: ${this.heavymaxTokens}`)
     info(`price_per_token: ${this.pricePerToken}`)
+    info(`price_per_token_out: ${this.priceperTokenout}`)
     info(`price_per_token_light: ${this.pricelightperToken}`)
+    info(`price_per_token_light_out: ${this.pricelightperTokenout}`)
     info(`price_per_token_heavy: ${this.priceheavyperToken}`)
+    info(`price_per_token_heavy_out: ${this.priceheavyperTokenout}`)
     info(`ai_concurrency_limit: ${this.aiConcurrencyLimit}`)
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
     info(`ai_api_base_url: ${this.apiBaseUrl}`)
