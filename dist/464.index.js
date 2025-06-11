@@ -1797,7 +1797,7 @@ exports.AbortError = AbortError;
 
 /***/ }),
 
-/***/ 5198:
+/***/ 1946:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
 
@@ -2626,7 +2626,7 @@ exports.parseURL = __webpack_require__(7669).parseURL;
 
 
 const punycode = __webpack_require__(5477);
-const tr46 = __webpack_require__(5198);
+const tr46 = __webpack_require__(1946);
 
 const specialSchemes = {
   ftp: 21,
