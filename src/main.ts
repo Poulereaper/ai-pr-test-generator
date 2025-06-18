@@ -51,7 +51,7 @@ async function run(): Promise<void> {
     getInput('ai_concurrency_limit'),
     getInput('github_concurrency_limit'),
     getInput('ai_api_base_url'),
-    getInput('protect_context'),
+    getInput('project_context'),
     getInput('your_test_gen_bot_name'),
     getInput('language')
   )
@@ -73,7 +73,7 @@ async function run(): Promise<void> {
     info (`Creating bot with the following options:`)
     info (`AI API: ${options.aiapi}`)
     info (`AI Light Model Uses: ${options.aiLightModeluses}`)
-    if (!options.aiLightModeluses) {
+    if (options.aiLightModeluses) {
       info (`AI Light Model: ${options.aiLightModel}`)
       info (`AI Heavy Model: ${options.aiHeavyModel}`)
       info (`AI Model Temperature: ${options.aiModelTemperature}`)
@@ -83,7 +83,7 @@ async function run(): Promise<void> {
       info ('AI heavy Model Max Tokens: ' + options.heavymaxTokens)
 
     }else {
-      info ('AI Model (light): ' + options.aiHeavyModel)
+      info ('AI Model (heavy only): ' + options.aiHeavyModel)
       info (`AI Model Temperature: ${options.aiModelTemperature}`)
       info (`AI Retries: ${options.aiRetries}`)
       info (`AI Timeout (ms): ${options.aiTimeoutMS}`)
@@ -238,20 +238,20 @@ async function run(): Promise<void> {
     const simpleTree = treeGenerator.generateSimpleTree()
     
     if (options.debug) {
-      info('Full Tree Output (50 first lines):')
+      info('-> Full Tree Output (50 first lines):')
       info(fullTree.split('\n')
           .slice(0, 50)
           .join('\n') || '(empty)'
       )
-      info('----------------------------')
-      info('\nSimple Tree Output (50 first lines):')
+      info('--------------')
+      info('\n-> Simple Tree Output (50 first lines):')
       info(
         simpleTree
           .split('\n')
           .slice(0, 50)
           .join('\n') || '(empty)'
       )
-      info('----------------------------\n')
+      info('--------------\n')
     }
     
     // Use simple tree for lighter prompts
