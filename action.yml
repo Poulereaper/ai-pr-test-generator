@@ -5,10 +5,13 @@ branding:
   color: 'purple'
 author: 'CISO ASSISTANT TEAM' 
 inputs:
+  #Debug option
   debug:
     required: false
     description: 'Enable debug mode'
     default: 'false'
+
+  # Basic Configuration and varibales needed 
   max_files:
     required: false
     description:
@@ -140,6 +143,8 @@ inputs:
     required: false
     description: 'Only provide the information that the code could need test modificatioon and skip suggestion of tests.'
     default: 'false'
+
+  # AI API Configuration
   ai_api_base_url:
     required: false
     description: 'The url of the openai api interface.'
@@ -226,18 +231,13 @@ inputs:
     required: false
     description: 'How many concurrent API calls to make to AI servers?'
     default: '6'
-  your_test_gen_bot_name:
-    required: false
-    description: 'The name of the bot that will be used to comment on the PR - Feel free to change it to your own bot name ;)'
-    default: 'AI Test Generator Bot'
-  project_context:
-    required: false
-    description: 'The context of the project, e.g., "This is a Python project that uses Flask and SQLAlchemy."'
-    default: 'No project context provided.'
+  # GitHub API Configuration
   github_concurrency_limit:
     required: false
     description: 'How many concurrent API calls to make to GitHub?'
     default: '6'
+
+  # Bot Configuration - feel free to especially change these to your own needs
   system_message:
     required: false
     description: 'System message to be sent to AI API'
@@ -297,6 +297,14 @@ inputs:
       - User's specific requirements or custom prompts
 
       Focus on generating high-quality, production-ready tests that improve code reliability and maintainability. Prioritize comprehensive coverage over minor style preferences.
+  your_test_gen_bot_name:
+    required: false
+    description: 'The name of the bot that will be used to comment on the PR - Feel free to change it to your own bot name ;)'
+    default: 'AI Test Generator Bot'
+  project_context:
+    required: false
+    description: 'The context of the project, Take time to provide a good context, explain what your tests (backend or frontend) should do and what is used in the project, this will help the bot to generate better tests.'
+    default: 'No project context provided.'
   language:
     required: false
     description: ISO code for the response language
