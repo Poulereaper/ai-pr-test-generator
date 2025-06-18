@@ -26,6 +26,7 @@ export class Options {
   priceheavyperToken: number
   priceheavyperTokenout: number
   aiConcurrencyLimit: number
+  aiorno: boolean // Debugging flag to indicate if AI is enabled or not (use it for debbug to avoid paying for AI calls)
   githubConcurrencyLimit: number
   apiBaseUrl: string
   projectContext: string
@@ -57,6 +58,7 @@ export class Options {
     priceheavyperToken = '0.005',
     priceheavyperTokenout = '0.016',
     aiConcurrencyLimit = '6',
+    aiorno = true, // Default to true for users
     githubConcurrencyLimit = '6',
     apiBaseUrl = 'https://api.openai.com/v1',
     projectContext = 'no project context provided',
@@ -87,6 +89,7 @@ export class Options {
     this.priceheavyperToken = parseFloat(priceheavyperToken)
     this.priceheavyperTokenout = parseFloat(priceheavyperTokenout)
     this.aiConcurrencyLimit = parseInt(aiConcurrencyLimit)
+    this.aiorno = aiorno
     this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit)
     this.apiBaseUrl = apiBaseUrl
     this.projectContext = projectContext
@@ -120,6 +123,7 @@ export class Options {
     info(`price_per_token_heavy: ${this.priceheavyperToken}`)
     info(`price_per_token_heavy_out: ${this.priceheavyperTokenout}`)
     info(`ai_concurrency_limit: ${this.aiConcurrencyLimit}`)
+    info(`ai_or_no: ${this.aiorno}`)
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
     info(`ai_api_base_url: ${this.apiBaseUrl}`)
     info(`project_context: ${this.projectContext}`)

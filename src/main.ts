@@ -49,6 +49,7 @@ async function run(): Promise<void> {
     getInput('price_per_token_heavy'),
     getInput('price_per_token_heavy_out'),
     getInput('ai_concurrency_limit'),
+    getBooleanInput('ai_or_no'), // Debugging flag to indicate if AI is enabled or not (use it for debbug to avoid paying for AI calls)
     getInput('github_concurrency_limit'),
     getInput('ai_api_base_url'),
     getInput('project_context'),

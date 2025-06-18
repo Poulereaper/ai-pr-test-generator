@@ -21,17 +21,17 @@ export class Prompts {
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`\`\`
+\`
 $description
-\`\`\`
+\`
 
 ### Project Context - Info
-\`\`\`
+
 $project_context
-\`\`\`
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
+
 \`\`\`
 $project_struct
 \`\`\`
@@ -80,14 +80,12 @@ Format your response as:
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`\`\`
+\`
 $description
-\`\`\`
+\`
 
 ### Project Context - Info
-\`\`\`
 $project_context
-\`\`\`
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
@@ -170,14 +168,12 @@ For each test category, explain:
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`\`\`
+\`
 $description
-\`\`\`
+\`
 
 ### Project Context - Info
-\`\`\`
 $project_context
-\`\`\`
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
@@ -266,14 +262,12 @@ For each file, briefly explain:
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`\`\`
+\`
 $description
-\`\`\`
+\`
 
 ### Project Context - Info
-\`\`\`
 $project_context
-\`\`\`
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
@@ -363,14 +357,12 @@ You are an expert test developer. Generate comprehensive, production-ready test 
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`\`\`
+\`
 $description
-\`\`\`
+\`
 
 ### Project Context - Info
-\`\`\`
 $project_context
-\`\`\`
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
@@ -460,14 +452,12 @@ You are a senior test developer creating a complete test suite for this PR. Gene
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`\`\`
+\`
 $description
-\`\`\`
+\`
 
 ### Project Context - Info
-\`\`\`
 $project_context
-\`\`\`
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
@@ -548,14 +538,12 @@ You are a cybersecurity expert conducting a security review of this code change.
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`\`\`
+\`
 $description
-\`\`\`
+\`
 
 ### Project Context - Info
-\`\`\`
 $project_context
-\`\`\`
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
@@ -586,6 +574,7 @@ $existing_tests_content
 \`\`\`
 
 ## Custom Instructions from User
+Pay attention to the following instructions for analyzing all files and their changes:
 
 $custom_prompt
 
@@ -618,14 +607,12 @@ You are an expert software engineer and analyst. The user has provided specific 
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`\`\`
+\`
 $description
-\`\`\`
+\`
 
 ### Project Context - Info
-\`\`\`
 $project_context
-\`\`\`
 
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
@@ -648,11 +635,9 @@ $related_files_content
 $existing_tests_content
 \`\`\`
 
-### Project Context
-$project_context
-
 
 ## Custom Instructions from User
+Pay attention to the following instructions for analyzing all files and their changes:
 
 $custom_prompt
 

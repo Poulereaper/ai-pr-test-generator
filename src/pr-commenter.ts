@@ -454,8 +454,12 @@ async function handleCommentEvent(
           if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
         }
 
-        //const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
-        const aiResponse = 'No AI to speedup tests'
+        let aiResponse: string | undefined;
+        if (options.aiorno) {
+          aiResponse = await lightBot?.sendPrompt(promptResult.prompt);
+        } else {
+          aiResponse = 'No AI - Debug mode';
+        }
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)
@@ -488,9 +492,13 @@ async function handleCommentEvent(
           info ('Target files : ' + promptResult.targetFiles.map(f => `\`${f}\``).join(', '))
           if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
         }
-
-        //const aiResponse = await lightBot?.sendPrompt(promptResult.prompt)
-        const aiResponse = 'No AI to speedup tests'
+        
+        let aiResponse: string | undefined;
+        if (options.aiorno) {
+          aiResponse = await lightBot?.sendPrompt(promptResult.prompt);
+        } else {
+          aiResponse = 'No AI - Debug mode';
+        }
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)
@@ -556,8 +564,12 @@ async function handleCommentEvent(
           if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
         }
 
-        //const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
-        const aiResponse = 'No AI to speedup tests'
+        let aiResponse: string | undefined;
+        if (options.aiorno) {
+          aiResponse = await lightBot?.sendPrompt(promptResult.prompt);
+        } else {
+          aiResponse = 'No AI - Debug mode';
+        }
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)

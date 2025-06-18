@@ -231,6 +231,11 @@ inputs:
     required: false
     description: 'How many concurrent API calls to make to AI servers?'
     default: '6'
+  ai_or_no_ai:
+    required: false
+    description: 'Debugging flag to indicate if AI is enabled or not (use it for debbug to avoid paying for AI calls) -> true = AI enabled, false = AI disabled'
+    default: 'true'
+
   # GitHub API Configuration
   github_concurrency_limit:
     required: false
