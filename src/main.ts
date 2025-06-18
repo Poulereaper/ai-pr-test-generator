@@ -186,27 +186,62 @@ async function run(): Promise<void> {
   info (`${options.botName} bot created successfully`)
 
 
-
   // ========== Project's Tree Generation ==========
 
   if (options.debug) {
-    info(`\n\n----------------------------\n\nDebugging Info - Project Tree Generator\n\n----------------------------\n\n`)
+    info(`\n\n----------------------------\n\nDebugging Info - Files Info\n\n----------------------------\n\n`)
   }
-  const treeGenerator = new TreeGenerator(options.pathFilters)
+
+  // Passez le flag debug au constructeur
+  const treeGenerator = new TreeGenerator(options.pathFilters, options.debug)
+
   try {
-    if (options.debug) {info('Starting project tree generation...')}
-    //prompts.project_struct = treeGenerator.generateTree() //Full tree 
-    //Display trees to test
-    info(treeGenerator.generateTree())
-    info(treeGenerator.generateSimpleTree())
-    prompts.project_struct = treeGenerator.generateSimpleTree() // Simplified tree
-    if (prompts.project_struct === '') {
-      warning('Project tree generation returned an empty structure, this might be due to an empty repository or incorrect path filters.')
-    } else {
-      info('Project tree generated successfully.')
+    if (options.debug) {
+      info('Starting project tree generation...')
+      // Afficher les informations de diagnostic
+      info('Diagnostic Info:')
+      info(treeGenerator.getDiagnosticInfo())
+      info('----------------------------')
     }
+    
+    // Test avec l'arborescence complète d'abord
+    const fullTree = treeGenerator.generateTree()
+    const simpleTree = treeGenerator.generateSimpleTree()
+    
+    if (options.debug) {
+      info('Full Tree Output:')
+      info(fullTree || '(empty)')
+      info('----------------------------')
+      info('Simple Tree Output:')
+      info(simpleTree || '(empty)')
+      info('----------------------------')
+    }
+    
+    // Affichage des arbres pour test (même sans debug)
+    info('=== FULL TREE ===')
+    info(fullTree || '(empty)')
+    info('=== SIMPLE TREE ===')
+    info(simpleTree || '(empty)')
+    
+    // Utiliser l'arbre simple pour le prompt
+    prompts.project_struct = simpleTree
+    
+    if (!prompts.project_struct || prompts.project_struct.trim() === '') {
+      warning('Project tree generation returned an empty structure.')
+      warning('This might be due to:')
+      warning('- Repository is empty')
+      warning('- Path filters are too restrictive')
+      warning('- Permission issues')
+      warning('- Incorrect workspace path')
+    } else {
+      info(`Project tree generated successfully (${prompts.project_struct.length} characters).`)
+    }
+    
   } catch (e: any) {
-    warning(`Project tree generation failed: ${e.message}, backtrace: ${e.stack}`)
+    Error(`Project tree generation failed: ${e.message}`)
+    if (options.debug) {
+      Error(`Stack trace: ${e.stack}`)
+    }
   }
 
   // ========== Files Analysis =======
