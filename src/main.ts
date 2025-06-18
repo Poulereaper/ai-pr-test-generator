@@ -209,21 +209,20 @@ async function run(): Promise<void> {
     const simpleTree = treeGenerator.generateSimpleTree()
     
     if (options.debug) {
-      info('Full Tree Output:')
-      info(fullTree || '(empty)')
+      info('Full Tree Output (50 first lines):')
+      info((fullTree.substring(0, 50)) || '(empty)')
       info('----------------------------')
-      info('Simple Tree Output:')
-      info(simpleTree || '(empty)')
+      info('Simple Tree Output (50 first lines):')
+      info(
+        simpleTree
+          .split('\n')
+          .slice(0, 50)
+          .join('\n') || '(empty)'
+      )
       info('----------------------------')
     }
     
-    // Affichage des arbres pour test (même sans debug)
-    info('=== FULL TREE ===')
-    info(fullTree || '(empty)')
-    info('=== SIMPLE TREE ===')
-    info(simpleTree || '(empty)')
-    
-    // Utiliser l'arbre simple pour le prompt
+    // Use simple tree for lighter prompts
     prompts.project_struct = simpleTree
     
     if (!prompts.project_struct || prompts.project_struct.trim() === '') {

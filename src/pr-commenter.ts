@@ -358,7 +358,8 @@ async function handleCommentEvent(
         filename: userCommand.filename,
         customPrompt: userCommand.customPrompt,
         filesInfo,
-        filesDependencies
+        filesDependencies,
+        projectContext: options.projectContext,
       }
       
       // Generate the prompt context and target files

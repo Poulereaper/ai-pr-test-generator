@@ -25,6 +25,11 @@ export class Prompts {
 $description
 \`\`\`
 
+### Project Context - Info
+\`\`\`
+$project_context
+\`\`\`
+
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
 \`\`\`
@@ -77,6 +82,11 @@ Format your response as:
 **Description**: 
 \`\`\`
 $description
+\`\`\`
+
+### Project Context - Info
+\`\`\`
+$project_context
 \`\`\`
 
 ### Project's Structure
@@ -162,6 +172,11 @@ For each test category, explain:
 **Description**: 
 \`\`\`
 $description
+\`\`\`
+
+### Project Context - Info
+\`\`\`
+$project_context
 \`\`\`
 
 ### Project's Structure
@@ -253,6 +268,11 @@ For each file, briefly explain:
 **Description**: 
 \`\`\`
 $description
+\`\`\`
+
+### Project Context - Info
+\`\`\`
+$project_context
 \`\`\`
 
 ### Project's Structure
@@ -347,6 +367,11 @@ You are an expert test developer. Generate comprehensive, production-ready test 
 $description
 \`\`\`
 
+### Project Context - Info
+\`\`\`
+$project_context
+\`\`\`
+
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
 \`\`\`
@@ -439,6 +464,11 @@ You are a senior test developer creating a complete test suite for this PR. Gene
 $description
 \`\`\`
 
+### Project Context - Info
+\`\`\`
+$project_context
+\`\`\`
+
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
 \`\`\`
@@ -522,6 +552,11 @@ You are a cybersecurity expert conducting a security review of this code change.
 $description
 \`\`\`
 
+### Project Context - Info
+\`\`\`
+$project_context
+\`\`\`
+
 ### Project's Structure
 Here is the structure of the project, analyse and understand all the files and directories to master our entire codebase.
 \`\`\`
@@ -585,6 +620,11 @@ You are an expert software engineer and analyst. The user has provided specific 
 **Description**: 
 \`\`\`
 $description
+\`\`\`
+
+### Project Context - Info
+\`\`\`
+$project_context
 \`\`\`
 
 ### Project's Structure
