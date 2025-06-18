@@ -12,7 +12,6 @@ export interface PromptContext {
   filesDependencies: Map<string, FileData>
   prTitle?: string
   prDescription?: string
-  ProjectStruct?: string
 }
 
 export interface PromptResult {
@@ -208,7 +207,7 @@ export class PromptBuilder {
       related_files_content: '',
       existing_tests_content: '',
       custom_prompt: context.customPrompt || '',
-      project_struct: context.ProjectStruct || ''
+      project_struct: this.prompts.project_struct || ''
     })
   }
 
