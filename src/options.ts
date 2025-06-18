@@ -59,7 +59,7 @@ export class Options {
     aiConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
     apiBaseUrl = 'https://api.openai.com/v1',
-    projectContext = '',
+    projectContext = 'no project context provided',
     botName = 'Test Generator Bot',
     language = 'en-US'
   ) {
