@@ -21,9 +21,7 @@ export class Prompts {
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`
-$description
-\`
+\`$description\`
 
 ### Project Context - Info
 
@@ -80,9 +78,7 @@ Format your response as:
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`
-$description
-\`
+\`$description\`
 
 ### Project Context - Info
 $project_context
@@ -168,9 +164,7 @@ For each test category, explain:
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`
-$description
-\`
+\`$description\`
 
 ### Project Context - Info
 $project_context
@@ -262,9 +256,7 @@ For each file, briefly explain:
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`
-$description
-\`
+\`$description\`
 
 ### Project Context - Info
 $project_context
@@ -357,9 +349,7 @@ You are an expert test developer. Generate comprehensive, production-ready test 
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`
-$description
-\`
+\`$description\`
 
 ### Project Context - Info
 $project_context
@@ -452,9 +442,7 @@ You are a senior test developer creating a complete test suite for this PR. Gene
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`
-$description
-\`
+\`$description\`
 
 ### Project Context - Info
 $project_context
@@ -538,9 +526,7 @@ You are a cybersecurity expert conducting a security review of this code change.
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`
-$description
-\`
+\`$description\`
 
 ### Project Context - Info
 $project_context
@@ -607,9 +593,7 @@ You are an expert software engineer and analyst. The user has provided specific 
 ### PR Information
 **Title**: \`$title\`
 **Description**: 
-\`
-$description
-\`
+\`$description\`
 
 ### Project Context - Info
 $project_context

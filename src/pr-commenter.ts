@@ -452,6 +452,7 @@ async function handleCommentEvent(
           info ('Prompt context : ' + promptResult.context)
           info ('Target files : ' + promptResult.targetFiles.map(f => `\`${f}\``).join(', '))
           if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
+          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
         }
 
         let aiResponse: string | undefined;
@@ -461,7 +462,6 @@ async function handleCommentEvent(
           aiResponse = 'No AI - Debug mode';
         }
         if (options.debug) {
-          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)
         }
         // Post the AI response as a comment
@@ -491,6 +491,7 @@ async function handleCommentEvent(
           info ('Prompt context : ' + promptResult.context)
           info ('Target files : ' + promptResult.targetFiles.map(f => `\`${f}\``).join(', '))
           if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
+          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
         }
         
         let aiResponse: string | undefined;
@@ -500,7 +501,6 @@ async function handleCommentEvent(
           aiResponse = 'No AI - Debug mode';
         }
         if (options.debug) {
-          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)
         }
 
@@ -562,6 +562,7 @@ async function handleCommentEvent(
           info ('Prompt context : ' + promptResult.context)
           info ('Target files : ' + promptResult.targetFiles.map(f => `\`${f}\``).join(', '))
           if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
+          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
         }
 
         let aiResponse: string | undefined;
@@ -571,7 +572,7 @@ async function handleCommentEvent(
           aiResponse = 'No AI - Debug mode';
         }
         if (options.debug) {
-          info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
+          
           info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)
         }
         // Post the AI response as a comment

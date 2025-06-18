@@ -1,11 +1,8 @@
-
 import {warning, info} from '@actions/core'
 import {context as github_context} from '@actions/github'
 import type { RestEndpointMethodTypes } from '@octokit/plugin-rest-endpoint-methods/dist-types/generated/parameters-and-response-types'
 import type { Api } from '@octokit/plugin-rest-endpoint-methods/dist-types/types'
 import type { PaginateInterface } from '@octokit/plugin-paginate-rest'
-//import type {NodePath} from '@babel/traverse'
-import * as fs from 'fs'
 import * as path from 'path'
 import * as parser from '@babel/parser'
 import traverse from '@babel/traverse'
@@ -14,17 +11,13 @@ import traverse from '@babel/traverse'
 import {octokit } from './octokit'
 import {Options} from './options'
 
-// eslint-disable-next-line camelcase
-//const context = github_context
-//const repo = context.repo
-
-
 // ========= Types for the Files Info Class ==========
 type DependencyType = 'import' | 'require' | 'reference' | 'extends' | 'implements' | 'uses'
 
 export interface FileDependency {
   path: string
   type: DependencyType
+  rawImport?: string // Import original pour debug
 }
 
 export interface FileData {
@@ -38,21 +31,9 @@ export interface FileData {
   isTest: boolean      // Whether this file is a test file
 }
 
-// ========= Files Info Class ==========
-// This class is used to store information about files that as been modified in the PR, it contains :
-// the file name, the diff of the file, the related files and the related tests
-
-// No Input, will use the context from github or if needed the inputs from the action
-// Output will be the class with the information about the files
-
-//Step 1: Create a class to store the file information
-// Step 2: get the files name and there full path in the PR
-// Step 3: get the diff of each file separately
-// Step 4: get the related files (dependancies) and tests for each file
-// Step 5: store the information for each files in the class 
-
 export class FilesInfo {
   private files: Map<string, FileData> = new Map()
+  private allRepoFiles: Set<string> = new Set() // Cache de tous les fichiers du repo
   private readonly options: Options
   private readonly testPatterns: RegExp[] = [
     /\.test\.[jt]sx?$/,      // matches .test.js, .test.ts, .test.jsx, .test.tsx
@@ -66,7 +47,7 @@ export class FilesInfo {
   ]
 
   constructor(options?: Options) {
-    this.options = options || new Options(false, false) //If no options are provided, use default options
+    this.options = options || new Options(false, false)
   }
 
   /**
@@ -74,8 +55,16 @@ export class FilesInfo {
    */
   public async processModifiedFiles(): Promise<void> {
     try {
+      // D'abord, récupérer tous les fichiers du repository pour améliorer la résolution
+      await this.loadRepositoryFiles()
+      
       // Step 2: Get the files name and their full path in the PR
       const modifiedFiles = await this.getModifiedFiles()
+      
+      if (this.options.debug) {
+        info(`Found ${modifiedFiles.length} modified files`)
+        modifiedFiles.forEach(file => info(`  - ${file.path}`))
+      }
       
       for (const file of modifiedFiles) {
         // Step 3: Get the diff of each file separately
@@ -102,7 +91,21 @@ export class FilesInfo {
       
       // Log the result if in debug mode
       if (this.options.debug) {
-        //info(`Files info: ${JSON.stringify(Array.from(this.files.entries()), null, 2)}`)
+        info(`\n=== FILES ANALYSIS RESULTS ===`)
+        for (const [filePath, fileData] of this.files.entries()) {
+          info(`\nFile: ${filePath}`)
+          info(`  Is Test: ${fileData.isTest}`)
+          info(`  Dependencies (${fileData.dependencies.length}):`)
+          fileData.dependencies.forEach(dep => 
+            info(`    - ${dep.path} (${dep.type}) [${dep.rawImport || 'N/A'}]`)
+          )
+          info(`  Dependents (${fileData.dependents.length}):`)
+          fileData.dependents.forEach(dep => 
+            info(`    - ${dep.path} (${dep.type})`)
+          )
+          info(`  Test Files (${fileData.testFiles.length}):`)
+          fileData.testFiles.forEach(test => info(`    - ${test}`))
+        }
       }
     } catch (error) {
       warning(`Error processing modified files: ${error}`)
@@ -110,10 +113,96 @@ export class FilesInfo {
   }
 
   /**
+   * Load all files from the repository to improve path resolution
+   */
+  private async loadRepositoryFiles(): Promise<void> {
+    try {
+      if (this.options.debug) {
+        info('Loading repository files for better path resolution...')
+      }
+
+      // Récupération récursive des fichiers via l'API GitHub
+      const files = await this.getRepositoryFilesRecursive('')
+      this.allRepoFiles = new Set(files)
+      
+      if (this.options.debug) {
+        info(`Loaded ${this.allRepoFiles.size} files from repository`)
+        if (this.allRepoFiles.size < 50) { // Afficher seulement si pas trop de fichiers
+          Array.from(this.allRepoFiles).slice(0, 20).forEach(file => info(`  - ${file}`))
+          if (this.allRepoFiles.size > 20) {
+            info(`  ... and ${this.allRepoFiles.size - 20} more files`)
+          }
+        }
+      }
+    } catch (error) {
+      warning(`Error loading repository files: ${error}`)
+    }
+  }
+
+  /**
+   * Recursively get all files from the repository
+   */
+  private async getRepositoryFilesRecursive(dirPath: string): Promise<string[]> {
+    const files: string[] = []
+    
+    try {
+      const {data} = await octokit.rest.repos.getContent({
+        owner: github_context.repo.owner,
+        repo: github_context.repo.repo,
+        path: dirPath,
+        ref: github_context.payload.pull_request?.head.sha
+      })
+
+      if (Array.isArray(data)) {
+        for (const item of data) {
+          if (item.type === 'file') {
+            files.push(item.path)
+          } else if (item.type === 'dir') {
+            // Récursion pour les dossiers, mais limiter la profondeur
+            if (this.shouldTraverseDirectory(item.path)) {
+              const subFiles = await this.getRepositoryFilesRecursive(item.path)
+              files.push(...subFiles)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      if (this.options.debug) {
+        warning(`Error reading directory ${dirPath}: ${error}`)
+      }
+    }
+
+    return files
+  }
+
+  /**
+   * Determine if we should traverse into a directory (avoid node_modules, etc.)
+   */
+  private shouldTraverseDirectory(dirPath: string): boolean {
+    const skipDirs = [
+      'node_modules',
+      '.git',
+      'dist',
+      'build',
+      'coverage',
+      '.next',
+      '.nuxt',
+      'vendor',
+      '__pycache__',
+      '.pytest_cache',
+      'target', // Java
+      'bin',
+      'obj'
+    ]
+    
+    const dirName = path.basename(dirPath)
+    return !skipDirs.includes(dirName) && !dirName.startsWith('.')
+  }
+
+  /**
    * Get all files that were modified in the current PR
    */
   private async getModifiedFiles(): Promise<{path: string}[]> {
-
     try {
       const {data: filesData} = await octokit.rest.pulls.listFiles({
         owner: github_context.repo.owner,
@@ -178,8 +267,17 @@ export class FilesInfo {
     for (const [filePath, fileData] of this.files.entries()) {
       if (!fileData.content) continue
       
+      if (this.options.debug) {
+        info(`Analyzing dependencies for: ${filePath}`)
+      }
+      
       const dependencies = this.extractDependencies(filePath, fileData.content)
       fileData.dependencies = dependencies
+      
+      if (this.options.debug && dependencies.length > 0) {
+        info(`  Found ${dependencies.length} dependencies:`)
+        dependencies.forEach(dep => info(`    - ${dep.rawImport} -> ${dep.path}`))
+      }
       
       // Update dependents for each dependency
       for (const dep of dependencies) {
@@ -187,7 +285,8 @@ export class FilesInfo {
         if (depFile) {
           depFile.dependents.push({
             path: filePath,
-            type: dep.type
+            type: dep.type,
+            rawImport: dep.rawImport
           })
         }
       }
@@ -207,23 +306,18 @@ export class FilesInfo {
         case '.jsx':
         case '.ts':
         case '.tsx':
-          // Parse JavaScript/TypeScript for imports and requires
           this.extractJavaScriptDependencies(filePath, content, dependencies)
-          break;
+          break
         case '.py':
-          // Parse Python imports
           this.extractPythonDependencies(filePath, content, dependencies)
-          break;
+          break
         case '.java':
-          // Parse Java imports
           this.extractJavaDependencies(filePath, content, dependencies)
-          break;
+          break
         case '.go':
-          // Parse Go imports
           this.extractGoDependencies(filePath, content, dependencies)
-          break;
+          break
         default:
-          // For other file types, use simple regex patterns
           this.extractGenericDependencies(filePath, content, dependencies)
       }
     } catch (error) {
@@ -241,20 +335,24 @@ export class FilesInfo {
       const ast = parser.parse(content, {
         sourceType: 'module',
         plugins: ['jsx', 'typescript', 'decorators-legacy'],
+        errorRecovery: true
       })
 
       traverse(ast, {
-        ImportDeclaration(nodePath) {
+        ImportDeclaration: (nodePath) => {
           const source = nodePath.node.source.value
-          if (typeof source === 'string' && !source.startsWith('.')) return
-          
-          const importPath = resolveRelativePath(filePath, source)
-          dependencies.push({
-            path: importPath,
-            type: 'import'
-          })
+          if (typeof source === 'string') {
+            const resolvedPath = this.resolveRelativePath(filePath, source)
+            if (resolvedPath) {
+              dependencies.push({
+                path: resolvedPath,
+                type: 'import',
+                rawImport: source
+              })
+            }
+          }
         },
-        CallExpression(nodePath) {
+        CallExpression: (nodePath) => {
           // Check for require() calls
           if (nodePath.node.callee.type === 'Identifier' && 
               nodePath.node.callee.name === 'require' &&
@@ -262,40 +360,128 @@ export class FilesInfo {
               nodePath.node.arguments[0].type === 'StringLiteral') {
             
             const source = nodePath.node.arguments[0].value
-            if (!source.startsWith('.')) return
-            
-            const requirePath = resolveRelativePath(filePath, source)
-            dependencies.push({
-              path: requirePath,
-              type: 'require'
-            })
+            const resolvedPath = this.resolveRelativePath(filePath, source)
+            if (resolvedPath) {
+              dependencies.push({
+                path: resolvedPath,
+                type: 'require',
+                rawImport: source
+              })
+            }
           }
         }
       })
-    } catch (error) {
-      warning(`Error parsing JavaScript/TypeScript file ${filePath}: ${error}`)
-    }
 
-    // Helper function to resolve relative paths
-    function resolveRelativePath(from: string, to: string): string {
-      const dir = path.dirname(from)
-      let resolved = path.resolve(dir, to)
+      // Fallback: regex pour attraper les imports qui n'ont pas été parsés
+      this.extractJavaScriptDependenciesRegex(filePath, content, dependencies)
       
-      // Handle explicit extensions
-      if (path.extname(to) !== '') {
-        return resolved
-      }
-      
-      // Try common extensions
-      const extensions = ['.js', '.jsx', '.ts', '.tsx', '/index.js', '/index.ts']
-      for (const ext of extensions) {
-        if (fs.existsSync(resolved + ext)) {
-          return resolved + ext
+    } catch (error) {
+      warning(`Error parsing JavaScript/TypeScript AST for ${filePath}: ${error}`)
+      // Fallback to regex parsing
+      this.extractJavaScriptDependenciesRegex(filePath, content, dependencies)
+    }
+  }
+
+  /**
+   * Regex fallback for JavaScript/TypeScript imports
+   */
+  private extractJavaScriptDependenciesRegex(filePath: string, content: string, dependencies: FileDependency[]): void {
+    // Import statements
+    const importRegex = /^\s*import\s+(?:(?:\w+,?\s*)?(?:\{[^}]*\})?(?:\w+)?\s+from\s+)?['"]([^'"]+)['"]/gm
+    // Require statements
+    const requireRegex = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+    // Dynamic imports
+    const dynamicImportRegex = /import\s*\(\s*['"]([^'"]+)['"]\s*\)/g
+
+    const regexes = [
+      { regex: importRegex, type: 'import' as DependencyType },
+      { regex: requireRegex, type: 'require' as DependencyType },
+      { regex: dynamicImportRegex, type: 'import' as DependencyType }
+    ]
+
+    for (const { regex, type } of regexes) {
+      let match
+      while ((match = regex.exec(content)) !== null) {
+        const source = match[1]
+        const resolvedPath = this.resolveRelativePath(filePath, source)
+        if (resolvedPath && !dependencies.some(d => d.path === resolvedPath)) {
+          dependencies.push({
+            path: resolvedPath,
+            type,
+            rawImport: source
+          })
         }
       }
-      
-      return resolved
     }
+  }
+
+  /**
+   * Improved relative path resolution using repository file cache
+   */
+  private resolveRelativePath(fromFile: string, importPath: string): string | null {
+    // Skip external packages (not starting with . or /)
+    if (!importPath.startsWith('./') && !importPath.startsWith('../') && !importPath.startsWith('/')) {
+      return null
+    }
+
+    const fromDir = path.dirname(fromFile)
+    
+    // Résoudre le chemin relatif
+    let resolvedPath: string
+    if (importPath.startsWith('/')) {
+      // Chemin absolu depuis la racine
+      resolvedPath = importPath.substring(1)
+    } else {
+      // Chemin relatif
+      resolvedPath = path.join(fromDir, importPath)
+    }
+
+    // Normaliser le chemin (enlever ./ et ../)
+    resolvedPath = path.normalize(resolvedPath)
+
+    // Si le chemin existe déjà tel quel
+    if (this.allRepoFiles.has(resolvedPath)) {
+      return resolvedPath
+    }
+
+    // Essayer avec différentes extensions
+    const extensions = ['.js', '.jsx', '.ts', '.tsx', '.json', '.py', '.java', '.go', '.rb']
+    
+    for (const ext of extensions) {
+      const pathWithExt = resolvedPath + ext
+      if (this.allRepoFiles.has(pathWithExt)) {
+        return pathWithExt
+      }
+    }
+
+    // Essayer avec index files
+    const indexFiles = ['/index.js', '/index.jsx', '/index.ts', '/index.tsx']
+    for (const indexFile of indexFiles) {
+      const indexPath = resolvedPath + indexFile
+      if (this.allRepoFiles.has(indexPath)) {
+        return indexPath
+      }
+    }
+
+    // Si rien n'est trouvé, chercher des fichiers similaires
+    const similarFiles = Array.from(this.allRepoFiles).filter(file => {
+      const basename = path.basename(resolvedPath)
+      return file.includes(basename) || path.basename(file, path.extname(file)) === basename
+    })
+
+    if (similarFiles.length > 0) {
+      if (this.options.debug) {
+        info(`Could not resolve ${importPath} from ${fromFile}, similar files found: ${similarFiles.join(', ')}`)
+      }
+      // Retourner le premier fichier similaire trouvé
+      return similarFiles[0]
+    }
+
+    if (this.options.debug) {
+      info(`Could not resolve import: ${importPath} from ${fromFile} -> ${resolvedPath}`)
+    }
+
+    return null
   }
 
   /**
@@ -314,7 +500,8 @@ export class FilesInfo {
         if (modulePath) {
           dependencies.push({
             path: modulePath,
-            type: 'import'
+            type: 'import',
+            rawImport: importPath
           })
         }
       }
@@ -336,7 +523,8 @@ export class FilesInfo {
       if (javaFilePath) {
         dependencies.push({
           path: javaFilePath,
-          type: 'import'
+          type: 'import',
+          rawImport: importPath
         })
       }
     }
@@ -360,10 +548,14 @@ export class FilesInfo {
       while ((importMatch = importLineRegex.exec(importBlock)) !== null) {
         const importPath = importMatch[1].trim()
         if (importPath.startsWith('./') || importPath.startsWith('../')) {
-          dependencies.push({
-            path: this.resolveGoPath(filePath, importPath),
-            type: 'import'
-          })
+          const resolvedPath = this.resolveRelativePath(filePath, importPath)
+          if (resolvedPath) {
+            dependencies.push({
+              path: resolvedPath,
+              type: 'import',
+              rawImport: importPath
+            })
+          }
         }
       }
     }
@@ -372,10 +564,14 @@ export class FilesInfo {
     while ((match = singleImportRegex.exec(content)) !== null) {
       const importPath = match[1].trim()
       if (importPath.startsWith('./') || importPath.startsWith('../')) {
-        dependencies.push({
-          path: this.resolveGoPath(filePath, importPath),
-          type: 'import'
-        })
+        const resolvedPath = this.resolveRelativePath(filePath, importPath)
+        if (resolvedPath) {
+          dependencies.push({
+            path: resolvedPath,
+            type: 'import',
+            rawImport: importPath
+          })
+        }
       }
     }
   }
@@ -390,12 +586,15 @@ export class FilesInfo {
     
     while ((match = genericRegex.exec(content)) !== null) {
       const importPath = match[1].trim()
-      const resolvedPath = path.resolve(path.dirname(filePath), importPath)
+      const resolvedPath = this.resolveRelativePath(filePath, importPath)
       
-      dependencies.push({
-        path: resolvedPath,
-        type: 'reference'
-      })
+      if (resolvedPath) {
+        dependencies.push({
+          path: resolvedPath,
+          type: 'reference',
+          rawImport: importPath
+        })
+      }
     }
   }
 
@@ -404,7 +603,7 @@ export class FilesInfo {
    */
   private async findTestsForFiles(): Promise<void> {
     for (const [filePath, fileData] of this.files.entries()) {
-      if (fileData.isTest) continue; // Skip test files themselves
+      if (fileData.isTest) continue // Skip test files themselves
       
       // First matching by naming conventions
       const testsByNaming = this.findTestsByNamingConvention(filePath)
@@ -439,8 +638,10 @@ export class FilesInfo {
       path.join(dir, '..', 'tests', `${baseName}.spec${ext}`)
     ]
     
-    // Return paths that match files we've seen in the PR
-    return possibleTestPaths.filter(testPath => this.files.has(testPath))
+    // Return paths that match files we've seen in the PR or in the repo
+    return possibleTestPaths.filter(testPath => 
+      this.files.has(testPath) || this.allRepoFiles.has(testPath)
+    )
   }
 
   /**
@@ -483,13 +684,13 @@ export class FilesInfo {
     
     // Try with .py extension
     const pyFile = `${resolvedPath}.py`
-    if (this.files.has(pyFile)) {
+    if (this.allRepoFiles.has(pyFile)) {
       return pyFile
     }
     
     // Try as a directory with __init__.py
     const initFile = path.join(resolvedPath, '__init__.py')
-    if (this.files.has(initFile)) {
+    if (this.allRepoFiles.has(initFile)) {
       return initFile
     }
     
@@ -501,60 +702,24 @@ export class FilesInfo {
    */
   private resolveJavaPath(filePath: string, importPath: string): string | null {
     // Only handle relative imports in the same project
-    if (!importPath.startsWith('.')) {
+    if (!importPath.includes('.')) {
       return null
     }
     
-    const projectRoot = this.findProjectRoot(filePath)
-    if (!projectRoot) return null
-    
     // Convert Java package notation to file path
     const javaFilePath = importPath.replace(/\./g, path.sep) + '.java'
-    const resolvedPath = path.join(projectRoot, 'src', 'main', 'java', javaFilePath)
     
-    return this.files.has(resolvedPath) ? resolvedPath : null
-  }
-
-  /**
-   * Resolve Go imports to file paths
-   */
-  private resolveGoPath(filePath: string, importPath: string): string {
-    const dir = path.dirname(filePath)
-    const resolvedPath = path.resolve(dir, importPath)
+    // Try different common Java project structures
+    const possiblePaths = [
+      javaFilePath,
+      path.join('src', 'main', 'java', javaFilePath),
+      path.join('src', javaFilePath)
+    ]
     
-    // Try with .go extension if not present
-    if (!resolvedPath.endsWith('.go')) {
-      return `${resolvedPath}.go`
-    }
-    
-    return resolvedPath
-  }
-
-  /**
-   * Find the project root directory by looking for common markers
-   */
-  private findProjectRoot(filePath: string): string | null {
-    let currentDir = path.dirname(filePath)
-    const maxDepth = 10
-    let depth = 0
-    
-    while (depth < maxDepth) {
-      // Check for common project root indicators
-      if (fs.existsSync(path.join(currentDir, 'pom.xml')) ||
-          fs.existsSync(path.join(currentDir, 'build.gradle')) ||
-          fs.existsSync(path.join(currentDir, '.git')) ||
-          fs.existsSync(path.join(currentDir, 'package.json'))) {
-        return currentDir
+    for (const possiblePath of possiblePaths) {
+      if (this.allRepoFiles.has(possiblePath)) {
+        return possiblePath
       }
-      
-      const parentDir = path.dirname(currentDir)
-      if (parentDir === currentDir) {
-        // We've reached the root directory
-        break
-      }
-      
-      currentDir = parentDir
-      depth++
     }
     
     return null

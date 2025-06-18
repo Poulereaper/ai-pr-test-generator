@@ -108,7 +108,6 @@ IMPORTANT: Entire response must be in the language with ISO code: ${options.lang
       
       if (this.options.debug) {
         info(`OpenAI response time: ${end - start} ms`)
-        info(`OpenAI response: ${response.text.substring(0, 500)}...`)
       }
 
       let responseText = response.text
@@ -176,7 +175,6 @@ IMPORTANT: Entire response must be in the language with ISO code: ${this.options
       
       if (this.options.debug) {
         info(`Mistral response time: ${end - start} ms`)
-        info(`Mistral response: ${responseData.content.substring(0, 500)}...`)
       }
       
       let responseText = responseData.content

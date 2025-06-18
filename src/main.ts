@@ -240,9 +240,11 @@ async function run(): Promise<void> {
     
     if (options.debug) {
       info('-> Full Tree Output (50 first lines):')
-      info(fullTree.split('\n')
+      info(
+        fullTree
+          .split('\n')
           .slice(0, 50)
-          .join('\n') || '(empty)'
+          .join('\n') + '...' || '(empty)'
       )
       info('--------------')
       info('\n-> Simple Tree Output (50 first lines):')
@@ -250,7 +252,7 @@ async function run(): Promise<void> {
         simpleTree
           .split('\n')
           .slice(0, 50)
-          .join('\n') || '(empty)'
+          .join('\n') + '...' || '(empty)'
       )
       info('--------------\n')
     }
