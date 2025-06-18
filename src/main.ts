@@ -15,6 +15,7 @@ import {GeminiOptions} from './options'
 import {Prompts} from './prompts'
 import {FilesInfo, FileData} from './related-files-finder'
 import {handlePRAnalysis} from './pr-commenter'
+import { TreeGenerator } from './project-tree-analyer'
 
 // ======= Options ========
 
@@ -56,7 +57,7 @@ async function run(): Promise<void> {
 
   const prompts: Prompts = new Prompts()
   
-  // ======= Bot Creation =======
+  // ======== Bot Creation ========
 
   let lightBot: Bot | null = null
   let heavyBot: Bot | null = null
@@ -172,6 +173,23 @@ async function run(): Promise<void> {
   }
   info (`${options.botName} bot created successfully`)
 
+
+
+  // ========== Project's Tree Generation ==========
+  const treeGenerator = new TreeGenerator(options.pathFilters)
+  try {
+    if (options.debug) {info('Starting project tree generation...')}
+    //prompts.project_struct = treeGenerator.generateTree() //Full tree 
+    prompts.project_struct = treeGenerator.generateSimpleTree() // Simplified tree
+    if (prompts.project_struct === '') {
+      warning('Project tree generation returned an empty structure, this might be due to an empty repository or incorrect path filters.')
+    } else {
+      info('Project tree generated successfully.')
+    }
+  } catch (e: any) {
+    warning(`Project tree generation failed: ${e.message}, backtrace: ${e.stack}`)
+  }
+
   // ========== Files Analysis =======
   // Before analysing the PR we need to check the files changed in the PR and find all their related files and related tests
 
@@ -189,7 +207,7 @@ async function run(): Promise<void> {
     
     // Process all modified files
     await filesInfo.processModifiedFiles()
-    
+
     // Get the dependencies and test files
     filesDependencies = filesInfo.getAllFiles()
     testsToModify = filesInfo.getTestsToModify()

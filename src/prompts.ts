@@ -647,8 +647,10 @@ You are an expert software architect and analyst. The user has provided specific
 [Provide your comprehensive analysis/response based on the user's custom instructions, considering all files and their interactions]
 `
 
+public project_struct = ``
+
   constructor() {
-    // Initialize any properties if needed o_o
+    // Initialize any properties if needed
   }
 
   renderSummarizeFileDiffForTest(inputs: Inputs): string {

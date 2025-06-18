@@ -35,7 +35,7 @@ function parseUserCommand(commentBody: string): UserCommand | null {
   const trimmedComment = commentBody.trim()
   const lowerComment = trimmedComment.toLowerCase()
   
-  // Regex patterns pour chaque type de commande
+  // Regex patterns for every command
   const patterns = {
     summarizeTests: /^summarize\s+tests(?:\s+(.+?))?(?:\s+--prompt\s+(.+))?$/i,
     allGenerateTests: /^all\s+generate\s+tests(?:\s+--prompt\s+(.+))?$/i,
@@ -49,7 +49,7 @@ function parseUserCommand(commentBody: string): UserCommand | null {
   
   let match: RegExpMatchArray | null = null
   
-  // Test des patterns dans l'ordre de spécificité (plus spécifique en premier)
+  // Patterns matching user commands
   if ((match = trimmedComment.match(patterns.summarizeTests))) {
     return {
       action: 'summarize tests',
@@ -135,7 +135,6 @@ function validateRequestedFile(
   filesInfo: FilesInfo | null, 
   filesDependencies: Map<string, FileData>
 ): ValidationResult {
-  // Si pas de filename (commandes "all"), c'est valide
   if (!filename) {
     return { valid: true }
   }
@@ -211,7 +210,7 @@ function getAvailableFilesMessage(
   )
   if (relatedFiles.length > 0) {
     message += '🔗 **Related files:**\n'
-    relatedFiles.slice(0, 10).forEach(path => { // Limit to first 10 to avoid too long messages
+    relatedFiles.slice(0, 15).forEach(path => { // Limit to first 15 to avoid too long messages
       message += `- \`${path}\`\n`
     })
     if (relatedFiles.length > 10) {
@@ -235,7 +234,6 @@ async function handlePullRequestEvent(
     info('Processing pull request event')
   }
   
-  // Vérification que le token est disponible (déjà gérée dans octokit.ts)
   if (!process.env.GITHUB_TOKEN && !getInput('token')) {
     setFailed('GITHUB_TOKEN is required for commenting on PRs')
     return
@@ -617,7 +615,6 @@ export async function handlePRAnalysis(
   }
 }
 
-//Simple Function to post the AI response as a comment
 //Simple Function to post the AI response as a comment
 export async function postAIResponse(
   aiResponse: string,

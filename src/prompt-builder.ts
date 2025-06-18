@@ -172,7 +172,7 @@ export class PromptBuilder {
       related_files_content: relatedFilesContent,
       existing_tests_content: existingTestsContent,
       custom_prompt: context.customPrompt || '',
-      project_struct: context.ProjectStruct || ''
+      project_struct: this.prompts.project_struct || ''
     })
   }
 
