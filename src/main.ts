@@ -193,7 +193,7 @@ async function run(): Promise<void> {
   }
 
   // Passez le flag debug au constructeur
-  const treeGenerator = new TreeGenerator(options.pathFilters, options.debug)
+  const treeGenerator = new TreeGenerator(options.pathFilters, false)
 
   try {
     if (options.debug) {

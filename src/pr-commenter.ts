@@ -359,7 +359,7 @@ async function handleCommentEvent(
         customPrompt: userCommand.customPrompt,
         filesInfo,
         filesDependencies,
-        projectContext: options.projectContext,
+        projectContext: options.projectContext
       }
       
       // Generate the prompt context and target files
@@ -445,7 +445,8 @@ async function handleCommentEvent(
           info(`Calling AI bot with action: ${userCommand.action}`)
         }
 
-        const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
+        //const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
+        const aiResponse = 'No AI to speedup tests'
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
@@ -475,7 +476,8 @@ async function handleCommentEvent(
           info(`Calling AI bot with action: ${userCommand.action}`)
         }
 
-        const aiResponse = await lightBot?.sendPrompt(promptResult.prompt)
+        //const aiResponse = await lightBot?.sendPrompt(promptResult.prompt)
+        const aiResponse = 'No AI to speedup tests'
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
@@ -537,7 +539,8 @@ async function handleCommentEvent(
           info(`Calling AI bot with action: ${userCommand.action}`)
         }
 
-        const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
+        //const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
+        const aiResponse = 'No AI to speedup tests'
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
           info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
