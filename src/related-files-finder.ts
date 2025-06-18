@@ -102,7 +102,7 @@ export class FilesInfo {
       
       // Log the result if in debug mode
       if (this.options.debug) {
-        info(`Files info: ${JSON.stringify(Array.from(this.files.entries()), null, 2)}`)
+        //info(`Files info: ${JSON.stringify(Array.from(this.files.entries()), null, 2)}`)
       }
     } catch (error) {
       warning(`Error processing modified files: ${error}`)

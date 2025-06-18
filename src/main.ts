@@ -19,6 +19,10 @@ import { TreeGenerator } from './project-tree-analyer'
 
 // ======= Options ========
 
+info('Starting TestGen Bot Action...')
+info('If you need any detail about this action, set the debug input to true to see more information in the logs.\n\n')
+
+// Check if the required inputs are provided
 async function run(): Promise<void> {
   const options: Options = new Options(
     getBooleanInput('debug'),
@@ -47,17 +51,25 @@ async function run(): Promise<void> {
     getInput('ai_concurrency_limit'),
     getInput('github_concurrency_limit'),
     getInput('ai_api_base_url'),
+    getInput('protect_context'),
     getInput('your_test_gen_bot_name'),
     getInput('language')
   )
 
-  options.print()
+  if(options.debug){
+    info(`\n\n----------------------------\n\nDebugging Info - Options\n\n----------------------------\n\n`)
+    options.print()
+  }
 
   // ========= Prompts =========
 
   const prompts: Prompts = new Prompts()
   
   // ======== Bot Creation ========
+
+  if (options.debug) {
+    info(`\n\n----------------------------\n\nDebugging Info - Bot Creation\n\n----------------------------\n\n`)
+  }
 
   let lightBot: Bot | null = null
   let heavyBot: Bot | null = null
@@ -176,10 +188,17 @@ async function run(): Promise<void> {
 
 
   // ========== Project's Tree Generation ==========
+
+  if (options.debug) {
+    info(`\n\n----------------------------\n\nDebugging Info - Project Tree Generator\n\n----------------------------\n\n`)
+  }
   const treeGenerator = new TreeGenerator(options.pathFilters)
   try {
     if (options.debug) {info('Starting project tree generation...')}
     //prompts.project_struct = treeGenerator.generateTree() //Full tree 
+    //Display trees to test
+    info(treeGenerator.generateTree())
+    info(treeGenerator.generateSimpleTree())
     prompts.project_struct = treeGenerator.generateSimpleTree() // Simplified tree
     if (prompts.project_struct === '') {
       warning('Project tree generation returned an empty structure, this might be due to an empty repository or incorrect path filters.')
@@ -211,7 +230,7 @@ async function run(): Promise<void> {
     // Get the dependencies and test files
     filesDependencies = filesInfo.getAllFiles()
     testsToModify = filesInfo.getTestsToModify()
-    
+
     if (options.debug) {
       info(`\n\n----------------------------\n\nDebugging Info - Diff and Related Files\n\n----------------------------\n\n`)
       info(`Found ${filesDependencies.size} related files`)

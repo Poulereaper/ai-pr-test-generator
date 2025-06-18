@@ -28,7 +28,7 @@ export class Options {
   aiConcurrencyLimit: number
   githubConcurrencyLimit: number
   apiBaseUrl: string
-  diffList: string
+  projectContext: string
   botName: string
   language: string
 
@@ -59,7 +59,7 @@ export class Options {
     aiConcurrencyLimit = '6',
     githubConcurrencyLimit = '6',
     apiBaseUrl = 'https://api.openai.com/v1',
-    diffList = 'diff',
+    protectContext = '',
     botName = 'Test Generator Bot',
     language = 'en-US'
   ) {
@@ -89,7 +89,7 @@ export class Options {
     this.aiConcurrencyLimit = parseInt(aiConcurrencyLimit)
     this.githubConcurrencyLimit = parseInt(githubConcurrencyLimit)
     this.apiBaseUrl = apiBaseUrl
-    this.diffList = diffList
+    this.projectContext = protectContext
     this.botName = botName
     this.language = language
   }
@@ -122,8 +122,8 @@ export class Options {
     info(`ai_concurrency_limit: ${this.aiConcurrencyLimit}`)
     info(`github_concurrency_limit: ${this.githubConcurrencyLimit}`)
     info(`ai_api_base_url: ${this.apiBaseUrl}`)
-    info(`diff_list: ${this.diffList}`)
-    info(`bot_name: ${this.botName}`)
+    info(`project_context: ${this.projectContext}`)
+    info(`your_test_gen_bot_name: ${this.botName}`)
     info(`language: ${this.language}`)
   }
 
