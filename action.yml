@@ -160,7 +160,7 @@ inputs:
   ai_light_model_uses:
     required: false
     description:
-      'Decide if we use only one or two models, if not available, the default model will be used.'
+      'Decide if we use only one or two models, if flase only the heavy model will be used'
     default: 'true'
   ai_light_model:
     required: false

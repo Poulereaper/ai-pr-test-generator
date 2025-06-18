@@ -265,6 +265,8 @@ async function handlePullRequestEvent(
     }
     
     // Add instructions for the user
+    commentBody += `<details>\n`
+    commentBody += `<summary>📋 <strong>Click here to see available commands</strong></summary>\n\n`
     commentBody += `### How to use:\n`
     commentBody += `Reply to this comment with one of these commands:\n\n`
     commentBody += `**Single file commands:**\n`
@@ -283,7 +285,8 @@ async function handlePullRequestEvent(
     commentBody += `- \`generate tests src/utils/helper.ts\`\n`
     commentBody += `- \`generate tests src/api/auth.ts --prompt Focus on error handling and edge cases\`\n`
     commentBody += `- \`all generate tests --prompt Use Jest and include integration tests\`\n`
-    commentBody += `- \`all custom prompt --prompt Generate performance tests for all files\`\n`
+    commentBody += `- \`all custom prompt --prompt Generate performance tests for all files\`\n\n`
+    commentBody += `</details>\n`
     
     // Post the comment using your octokit module
     await octokit.rest.issues.createComment({
@@ -373,7 +376,7 @@ async function handleCommentEvent(
       }
       
       // Prepare initial response body -> Comment this part after to avoid spamming the user, or in debug mode only ?
-      let responseBody = `✅ **Command received**: \`${userCommand.action} ${userCommand.filename || ''}\`\n\n`
+      /*let responseBody = `✅ **Command received**: \`${userCommand.action} ${userCommand.filename || ''}\`\n\n`
       responseBody += `📋 **Context**: ${promptResult.context}\n`
       responseBody += `📁 **Target files**: ${promptResult.targetFiles.map(f => `\`${f}\``).join(', ')}\n`
       
@@ -389,7 +392,9 @@ async function handleCommentEvent(
         repo: github_context.repo.repo,
         issue_number: github_context.issue.number,
         body: responseBody
-      })
+      })*/
+
+
       // Tokenize the prompt to avoid exceeding limits
       //getTokenCount(promptResult.prompt, options.aiapi)
       const TokenPrompt = await getTokenCount(promptResult.prompt, options.aiapi)
@@ -443,13 +448,17 @@ async function handleCommentEvent(
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n`)
           info(`Calling AI bot with action: ${userCommand.action}`)
+          info ('Commande received : ' + userCommand.action + userCommand.filename)
+          info ('Prompt context : ' + promptResult.context)
+          info ('Target files : ' + promptResult.targetFiles.map(f => `\`${f}\``).join(', '))
+          if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
         }
 
         //const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
         const aiResponse = 'No AI to speedup tests'
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
-          info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
+          info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)
         }
         // Post the AI response as a comment
 
@@ -474,13 +483,17 @@ async function handleCommentEvent(
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n`)
           info(`Calling AI bot with action: ${userCommand.action}`)
+          info ('Commande received : ' + userCommand.action + userCommand.filename)
+          info ('Prompt context : ' + promptResult.context)
+          info ('Target files : ' + promptResult.targetFiles.map(f => `\`${f}\``).join(', '))
+          if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
         }
 
         //const aiResponse = await lightBot?.sendPrompt(promptResult.prompt)
         const aiResponse = 'No AI to speedup tests'
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
-          info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
+          info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)
         }
 
         // Post the AI response as a comment
@@ -537,13 +550,17 @@ async function handleCommentEvent(
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Call\n\n----------------------------\n\n`)
           info(`Calling AI bot with action: ${userCommand.action}`)
+          info ('Commande received : ' + userCommand.action + userCommand.filename)
+          info ('Prompt context : ' + promptResult.context)
+          info ('Target files : ' + promptResult.targetFiles.map(f => `\`${f}\``).join(', '))
+          if (userCommand.customPrompt) {info(`Custom prompt: ${userCommand.customPrompt}`)}
         }
 
         //const aiResponse = await heavyBot?.sendPrompt(promptResult.prompt)
         const aiResponse = 'No AI to speedup tests'
         if (options.debug) {
           info(`\n\n----------------------------\n\nDebugging Info - AI Response\n\n----------------------------\n`)
-          info(`AI response: ${aiResponse?.substring(0, 4000)}...`)
+          info(`AI response:\n ${aiResponse?.substring(0, 4000)}...\n`)
         }
         // Post the AI response as a comment
 

@@ -19,7 +19,7 @@ import { TreeGenerator } from './project-tree-analyer'
 
 // ======= Options ========
 
-info('Starting TestGen Bot Action...')
+info('\n    o_o Hello... \n\nStarting Tests Generator Bot Action...')
 info('If you need any detail about this action, set the debug input to true to see more information in the logs.\n\n')
 
 // Check if the required inputs are provided
@@ -69,6 +69,26 @@ async function run(): Promise<void> {
 
   if (options.debug) {
     info(`\n\n----------------------------\n\nDebugging Info - Bot Creation\n\n----------------------------\n\n`)
+    info ('The Bot is basiclly the AI model that will be used to generate the tests and comments for the PR.\n')
+    info (`Creating bot with the following options:`)
+    info (`AI API: ${options.aiapi}`)
+    info (`AI Light Model Uses: ${options.aiLightModeluses}`)
+    if (!options.aiLightModeluses) {
+      info (`AI Light Model: ${options.aiLightModel}`)
+      info (`AI Heavy Model: ${options.aiHeavyModel}`)
+      info (`AI Model Temperature: ${options.aiModelTemperature}`)
+      info (`AI Retries: ${options.aiRetries}`)
+      info (`AI Timeout (ms): ${options.aiTimeoutMS}`)
+      info ('AI light Model Max Tokens: ' + options.lightmaxTokens)
+      info ('AI heavy Model Max Tokens: ' + options.heavymaxTokens)
+
+    }else {
+      info ('AI Model (light): ' + options.aiHeavyModel)
+      info (`AI Model Temperature: ${options.aiModelTemperature}`)
+      info (`AI Retries: ${options.aiRetries}`)
+      info (`AI Timeout (ms): ${options.aiTimeoutMS}`)
+      info ('AI light Model Max Tokens: ' + options.heavymaxTokens)
+    }
   }
 
   let lightBot: Bot | null = null
@@ -114,9 +134,12 @@ async function run(): Promise<void> {
       }
       
       lightBot = createBot(options, lightModelOptions);
+      if (options.debug && lightBot) {
+        info(`Light model bot created successfully with model: ${options.aiLightModel}`);
+      }
     } catch (e: any) {
       warning(
-        `Skipped: failed to create summary bot, please check your ${options.aiapi} API key: ${e}, backtrace: ${e.stack}`
+        `Skipped: failed to create bot, please check your ${options.aiapi} API key: ${e}, backtrace: ${e.stack}`
       )
       return
     }
@@ -140,6 +163,9 @@ async function run(): Promise<void> {
       }
       
       heavyBot = createBot(options, heavyModelOptions);
+      if (options.debug && heavyBot) {
+        info(`Heavy model bot created successfully with model: ${options.aiHeavyModel}`);
+      }
     } catch (e: any) {
       warning(
         `Skipped: failed to create review bot, please check your ${options.aiapi} API key: ${e}, backtrace: ${e.stack}`
@@ -176,6 +202,9 @@ async function run(): Promise<void> {
       }
       
       heavyBot = createBot(options, modelOptions);
+      if (options.debug && lightBot) {
+        info(`Light model bot created successfully with model: ${options.aiLightModel}`);
+      }
     } catch (e: any) {
       warning(
         `Skipped: failed to create bot, please check your ${options.aiapi} API key: ${e}, backtrace: ${e.stack}`
@@ -183,13 +212,13 @@ async function run(): Promise<void> {
       return
     }
   }
-  info (`${options.botName} bot created successfully`)
+  info (`${options.botName} Bot created successfully !`)
 
 
   // ========== Project's Tree Generation ==========
 
   if (options.debug) {
-    info(`\n\n----------------------------\n\nDebugging Info - Files Info\n\n----------------------------\n\n`)
+    info(`\n\n----------------------------\n\nDebugging Info - Projects Tree\n\n----------------------------\n\n`)
   }
 
   // Passez le flag debug au constructeur
@@ -197,7 +226,7 @@ async function run(): Promise<void> {
 
   try {
     if (options.debug) {
-      info('Starting project tree generation...')
+      info('Starting project tree generation...\n')
       // display diagnostic info if debug is enabled
       //info('Diagnostic Info:')
       //info(treeGenerator.getDiagnosticInfo())
@@ -215,14 +244,14 @@ async function run(): Promise<void> {
           .join('\n') || '(empty)'
       )
       info('----------------------------')
-      info('Simple Tree Output (50 first lines):')
+      info('\nSimple Tree Output (50 first lines):')
       info(
         simpleTree
           .split('\n')
           .slice(0, 50)
           .join('\n') || '(empty)'
       )
-      info('----------------------------')
+      info('----------------------------\n')
     }
     
     // Use simple tree for lighter prompts
@@ -255,7 +284,8 @@ async function run(): Promise<void> {
 
   try {
     if (options.debug) {
-      info('Starting files analysis to find related files and tests...')
+      info(`\n\n----------------------------\n\nDebugging Info - Diff and Related Files\n\n----------------------------\n\n`)
+      info('Starting files analysis to find related files and tests...\n')
     }
     
     // Initialize the FilesInfo class
@@ -269,7 +299,6 @@ async function run(): Promise<void> {
     testsToModify = filesInfo.getTestsToModify()
 
     if (options.debug) {
-      info(`\n\n----------------------------\n\nDebugging Info - Diff and Related Files\n\n----------------------------\n\n`)
       info(`Found ${filesDependencies.size} related files`)
       info(`Found ${testsToModify.length} test files that may need to be updated`)
       
