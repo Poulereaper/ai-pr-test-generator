@@ -198,10 +198,10 @@ async function run(): Promise<void> {
   try {
     if (options.debug) {
       info('Starting project tree generation...')
-      // Afficher les informations de diagnostic
-      info('Diagnostic Info:')
-      info(treeGenerator.getDiagnosticInfo())
-      info('----------------------------')
+      // display diagnostic info if debug is enabled
+      //info('Diagnostic Info:')
+      //info(treeGenerator.getDiagnosticInfo())
+      //info('----------------------------')
     }
     
     // Test avec l'arborescence complète d'abord
@@ -210,7 +210,10 @@ async function run(): Promise<void> {
     
     if (options.debug) {
       info('Full Tree Output (50 first lines):')
-      info((fullTree.substring(0, 50)) || '(empty)')
+      info(fullTree.split('\n')
+          .slice(0, 50)
+          .join('\n') || '(empty)'
+      )
       info('----------------------------')
       info('Simple Tree Output (50 first lines):')
       info(

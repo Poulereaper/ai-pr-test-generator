@@ -304,7 +304,7 @@ inputs:
   project_context:
     required: false
     description: 'The context of the project, Take time to provide a good context, explain what your tests (backend or frontend) should do and what is used in the project, this will help the bot to generate better tests.'
-    default: 'No project context provided.'
+    default: 'No project context provided by the user.'
   language:
     required: false
     description: ISO code for the response language
