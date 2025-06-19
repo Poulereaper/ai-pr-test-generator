@@ -439,18 +439,20 @@ export class FilesInfo {
     // Normaliser le chemin (enlever ./ et ../)
     resolvedPath = path.normalize(resolvedPath)
 
-    // Si le chemin existe déjà tel quel
-    if (this.allRepoFiles.has(resolvedPath)) {
-      return resolvedPath
+    // Vérifier le chemin exact d'abord
+    const exactMatch = this.findFileInCurrentAndParentDirs(resolvedPath)
+    if (exactMatch) {
+      return exactMatch
     }
 
-    // Essayer avec différentes extensions
+    // Si pas trouvé exactement, essayer avec des extensions
     const extensions = ['.js', '.jsx', '.ts', '.tsx', '.json', '.py', '.java', '.go', '.rb']
     
     for (const ext of extensions) {
       const pathWithExt = resolvedPath + ext
-      if (this.allRepoFiles.has(pathWithExt)) {
-        return pathWithExt
+      const matchWithExt = this.findFileInCurrentAndParentDirs(pathWithExt)
+      if (matchWithExt) {
+        return matchWithExt
       }
     }
 
@@ -458,8 +460,9 @@ export class FilesInfo {
     const indexFiles = ['/index.js', '/index.jsx', '/index.ts', '/index.tsx']
     for (const indexFile of indexFiles) {
       const indexPath = resolvedPath + indexFile
-      if (this.allRepoFiles.has(indexPath)) {
-        return indexPath
+      const matchWithIndex = this.findFileInCurrentAndParentDirs(indexPath)
+      if (matchWithIndex) {
+        return matchWithIndex
       }
     }
 
@@ -482,6 +485,61 @@ export class FilesInfo {
     }
 
     return null
+  }
+
+  private findFileInCurrentAndParentDirs(targetPath: string): string | null {
+    // D'abord, essayer le chemin exact
+    if (this.allRepoFiles.has(targetPath)) {
+      return targetPath
+    }
+
+    // Ensuite, chercher dans les dossiers parents (jusqu'à 3 niveaux)
+    const maxParentLevels = 3
+    const baseName = path.basename(targetPath)
+    
+    for (let level = 1; level <= maxParentLevels; level++) {
+      // Générer les chemins possibles à ce niveau parent
+      const possiblePaths = this.generateParentLevelPaths(targetPath, level)
+      
+      for (const possiblePath of possiblePaths) {
+        if (this.allRepoFiles.has(possiblePath)) {
+          if (this.options.debug) {
+            info(`Found file in parent directory (level ${level}): ${possiblePath}`)
+          }
+          return possiblePath
+        }
+      }
+    }
+
+    return null
+  }
+
+  private generateParentLevelPaths(originalPath: string, parentLevel: number): string[] {
+    const possiblePaths: string[] = []
+    const fileName = path.basename(originalPath)
+    const originalDir = path.dirname(originalPath)
+    
+    // Monter d'un niveau à la fois
+    let currentDir = originalDir
+    for (let i = 0; i < parentLevel; i++) {
+      currentDir = path.dirname(currentDir)
+      if (currentDir === '.' || currentDir === '/') {
+        break
+      }
+    }
+
+    // Générer différentes combinaisons de chemins possibles
+    const commonSubDirs = ['src', 'lib', 'utils', 'components', 'services', 'helpers', 'core', 'common', 'shared']
+    
+    // Chemin direct dans le dossier parent
+    possiblePaths.push(path.join(currentDir, fileName))
+    
+    // Chercher dans les sous-dossiers communs du dossier parent
+    for (const subDir of commonSubDirs) {
+      possiblePaths.push(path.join(currentDir, subDir, fileName))
+    }
+
+    return possiblePaths.filter(p => p !== originalPath) // Éviter les doublons
   }
 
   /**
@@ -624,24 +682,65 @@ export class FilesInfo {
     const baseName = path.basename(filePath, path.extname(filePath))
     const ext = path.extname(filePath)
     
-    // Common test file patterns based on the source file name
-    const possibleTestPaths = [
-      path.join(dir, `${baseName}.test${ext}`),
-      path.join(dir, `${baseName}.spec${ext}`),
-      path.join(dir, `${baseName}_test${ext}`),
-      path.join(dir, `test_${baseName}${ext}`),
-      path.join(dir, '__tests__', `${baseName}.test${ext}`),
-      path.join(dir, '__tests__', `${baseName}.spec${ext}`),
-      path.join(dir, 'tests', `${baseName}.test${ext}`),
-      path.join(dir, 'tests', `${baseName}.spec${ext}`),
-      path.join(dir, '..', 'tests', `${baseName}.test${ext}`),
-      path.join(dir, '..', 'tests', `${baseName}.spec${ext}`)
-    ]
+    const testFiles: string[] = []
     
-    // Return paths that match files we've seen in the PR or in the repo
-    return possibleTestPaths.filter(testPath => 
-      this.files.has(testPath) || this.allRepoFiles.has(testPath)
-    )
+    // Recherche dans le répertoire courant et les dossiers parents (jusqu'à 3 niveaux)
+    for (let level = 0; level <= 3; level++) {
+      let searchDir = dir
+      
+      // Monter dans l'arborescence
+      for (let i = 0; i < level; i++) {
+        searchDir = path.dirname(searchDir)
+        if (searchDir === '.' || searchDir === '/') {
+          break
+        }
+      }
+      
+      // Patterns de test possibles à ce niveau
+      const possibleTestPaths = [
+        // Dans le répertoire direct
+        path.join(searchDir, `${baseName}.test${ext}`),
+        path.join(searchDir, `${baseName}.spec${ext}`),
+        path.join(searchDir, `${baseName}_test${ext}`),
+        path.join(searchDir, `test_${baseName}${ext}`),
+        
+        // Dans des sous-dossiers de test
+        path.join(searchDir, '__tests__', `${baseName}.test${ext}`),
+        path.join(searchDir, '__tests__', `${baseName}.spec${ext}`),
+        path.join(searchDir, 'tests', `${baseName}.test${ext}`),
+        path.join(searchDir, 'tests', `${baseName}.spec${ext}`),
+        path.join(searchDir, 'test', `${baseName}.test${ext}`),
+        path.join(searchDir, 'test', `${baseName}.spec${ext}`),
+        
+        // Patterns spécifiques selon les langages
+        ...(ext === '.py' ? [
+          path.join(searchDir, `test_${baseName}.py`),
+          path.join(searchDir, 'tests', `test_${baseName}.py`)
+        ] : []),
+        ...(ext === '.java' ? [
+          path.join(searchDir, `${baseName}Test.java`),
+          path.join(searchDir, 'test', 'java', searchDir.replace('src/main/java/', ''), `${baseName}Test.java`)
+        ] : []),
+        ...(ext === '.go' ? [
+          path.join(searchDir, `${baseName}_test.go`)
+        ] : [])
+      ]
+      
+      // Filtrer les chemins qui existent
+      const existingTests = possibleTestPaths.filter(testPath => 
+        this.files.has(testPath) || this.allRepoFiles.has(testPath)
+      )
+      
+      testFiles.push(...existingTests)
+      
+      if (this.options.debug && existingTests.length > 0) {
+        info(`Found ${existingTests.length} test files at parent level ${level} for ${filePath}:`)
+        existingTests.forEach(test => info(`  - ${test}`))
+      }
+    }
+    
+    // Retourner les chemins uniques
+    return [...new Set(testFiles)]
   }
 
   /**
